@@ -1,0 +1,26 @@
+// -*- C++ -*-
+//===-------------------------- __net_config ------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//  Based on N4332
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP_EXPERIMENTAL__NET_CONFIG
+#define _LIBCPP_EXPERIMENTAL__NET_CONFIG
+
+#include <experimental/__config>
+
+
+#define _LIBCPP_BEGIN_NAMESPACE_NETWORK _LIBCPP_BEGIN_NAMESPACE_EXPERIMENTAL inline namespace network_v1 {
+#define _LIBCPP_END_NAMESPACE_NETWORK  } } }
+#define _VSTD_NETWORK _VSTD_EXPERIMENTAL::network_v1
+
+#define _LIBCPP_BEGIN_NAMESPACE_NETWORK_IP _LIBCPP_BEGIN_NAMESPACE_NETWORK namespace ip {
+#define _LIBCPP_END_NAMESPACE_NETWORK_IP  } } } }
+#define _VSTD_NETWORK_IP _VSTD_NETWORK::ip
+
+#endif

@@ -1,0 +1,43 @@
+// -*- C++ -*-
+//===----------------------------- timer ---------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//  Based on N4332
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP_EXPERIMENTAL_TIMER
+#define _LIBCPP_EXPERIMENTAL_TIMER
+
+/* 
+    io_service synopsis
+
+#include <chrono>
+
+namespace std {
+  namespace experimental {
+    inline namespace network_v1 {
+
+      template<class Clock> struct wait_traits;
+
+      template<class Clock, class WaitTraits = wait_traits<Clock>>
+        class basic_waitable_timer;
+
+      typedef basic_waitable_timer<chrono::system_clock> system_timer;
+      typedef basic_waitable_timer<chrono::steady_clock> steady_timer;
+      typedef basic_waitable_timer<chrono::high_resolution_clock> high_resolution_timer;
+
+    } // inline namespace network_v1
+  } // namespace experimental
+} // namespace std
+
+*/
+
+
+#include <experimental/__net_config>
+#include <chrono>
+
+#endif

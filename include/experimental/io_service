@@ -1,0 +1,33 @@
+// -*- C++ -*-
+//===--------------------------- io_service -------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//  Based on N4332
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP_EXPERIMENTAL_IO_SERVICE
+#define _LIBCPP_EXPERIMENTAL_IO_SERVICE
+
+/* 
+    io_service synopsis
+
+namespace std {
+  namespace experimental {
+    inline namespace network_v1 {
+
+      class io_service;
+
+    } // inline namespace network_v1
+  } // namespace experimental
+} // namespace std
+
+*/
+
+
+#include <experimental/__net_config>
+
+#endif
