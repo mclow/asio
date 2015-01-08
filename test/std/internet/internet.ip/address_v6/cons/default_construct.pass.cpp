@@ -30,6 +30,8 @@ namespace ip = std::experimental::network_v1::ip;
 
 int main()
 {
+    static_assert((std::is_nothrow_default_constructible<ip::address_v6>::value), "");
+
     {
     ip::address_v6 addr1;
     assert(addr1.is_unspecified());

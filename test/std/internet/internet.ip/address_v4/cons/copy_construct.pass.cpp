@@ -28,6 +28,8 @@ namespace ip = std::experimental::network_v1::ip;
 
 int main()
 {
+    static_assert((std::is_nothrow_copy_constructible<ip::address_v4>::value), "");
+
     {
     ip::address_v4 addr1;
     ip::address_v4 addr2 = addr1;
