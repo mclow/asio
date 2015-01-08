@@ -250,6 +250,7 @@ namespace std {
 #include <system_error> // for error_code
 #include <array>
 #include <string>
+#include <stdexcept>
 #include <experimental/string_view>
 
 _LIBCPP_BEGIN_NAMESPACE_NETWORK_IP
@@ -279,9 +280,21 @@ public:
 
     constexpr address_v4() noexcept : __bytes(0,0,0,0) {}
     constexpr address_v4(const address_v4& __rhs) noexcept : __bytes(__rhs.__bytes) {}
-    constexpr address_v4(const bytes_type& __b) : __bytes(__b) {}
+    constexpr address_v4(const bytes_type& __b) : __bytes(__b)
+    {
+#if UCHAR_MAX > 0xFF
+    for ( const auto __c : __b )
+        if ( __c > 0xFFF ) throw std::out_of_range{"Octet too big in address_v4::address_v4"};
+#endif
+    }
+
     explicit constexpr address_v4(unsigned long __v)
-    	: __bytes { (__v >> 24) & 0xFF, (__v >> 16) & 0xFF, (__v >> 8) & 0xFF, __v & 0xFF } {}
+        : __bytes {(__v >> 24) & 0xFF, (__v >> 16) & 0xFF, (__v >> 8) & 0xFF, __v & 0xFF}
+    {
+#if ULONG_MAX > 0xFFFFFFFF
+    if ( __v > 0xFFFFFFFF ) throw std::out_of_range{"Long too big in address_v4::address_v4"};
+#endif
+    }
 
     address_v4& operator=(const address_v4& __rhs) noexcept
     {
@@ -297,11 +310,11 @@ public:
     constexpr bool is_multicast()   const noexcept { return (to_ulong() & 0xF0000000) == 0xE0000000; }
     constexpr bytes_type to_bytes() const noexcept { return __bytes; }
     constexpr unsigned long to_ulong() const noexcept {
-  		unsigned long __val = (((unsigned long)__bytes[0]) << 24) | 
-  		                      (((unsigned long)__bytes[1]) << 16) | 
-  	      	                  (((unsigned long)__bytes[2]) <<  8) |
-  	                                           __bytes[3];
-		return __val;
+        unsigned long __val = (((unsigned long)__bytes[0]) << 24) | 
+                              (((unsigned long)__bytes[1]) << 16) | 
+                              (((unsigned long)__bytes[2]) <<  8) |
+                                               __bytes[3];
+        return __val;
     }
     
     _VSTD::string to_string() const;
@@ -323,32 +336,32 @@ public:
         auto it = ret.begin();
         for ( const auto c : __bytes ) {
             if ( c > 100 )
-            	*it++ += ( c / 100 ) % 10;
+                *it++ += ( c / 100 ) % 10;
             if ( c > 10 )
-            	*it++  += ( c / 10 ) % 10;
-           	*it++  += c % 10;
-           	*it++  = '.';
+                *it++  += ( c / 10 ) % 10;
+            *it++  += c % 10;
+            *it++  = '.';
             }
         ret.erase ( --it, ret.end());
         return ret;
     }
     
-bool operator==(const address_v4& __x, const address_v4& __y) noexcept
+constexpr bool operator==(const address_v4& __x, const address_v4& __y) noexcept
 { return __x.to_ulong() == __y.to_ulong(); }
 
-bool operator!=(const address_v4& __x, const address_v4& __y) noexcept
+constexpr bool operator!=(const address_v4& __x, const address_v4& __y) noexcept
 { return !(__x == __y); }
 
-bool operator< (const address_v4& __x, const address_v4& __y) noexcept
+constexpr bool operator< (const address_v4& __x, const address_v4& __y) noexcept
 { return __x.to_ulong() < __y.to_ulong(); }
 
-bool operator> (const address_v4& __x, const address_v4& __y) noexcept
+constexpr bool operator> (const address_v4& __x, const address_v4& __y) noexcept
 { return __y < __x; }
 
-bool operator<=(const address_v4& __x, const address_v4& __y) noexcept
+constexpr bool operator<=(const address_v4& __x, const address_v4& __y) noexcept
 { return !(__y < __x); }
 
-bool operator>=(const address_v4& __x, const address_v4& __y) noexcept
+constexpr bool operator>=(const address_v4& __x, const address_v4& __y) noexcept
 { return !(__x < __y); }
 
 constexpr address_v4 make_address_v4(const address_v4::bytes_type& __b)
@@ -361,16 +374,16 @@ constexpr address_v4 make_address_v4(unsigned long __v)
 
 address_v4 make_address_v4(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
 {
-	__ec.assign(EOPNOTSUPP, _VSTD::system_category());
-	return address_v4(); // !!! TODO
+    __ec.assign(EOPNOTSUPP, _VSTD::system_category());
+    return address_v4(); // !!! TODO
 }
 
 address_v4 make_address_v4(_VSTD_LFTS::string_view __sv)
 {
-	_VSTD::error_code __ec;
-	address_v4 addr = make_address_v4(__sv, __ec);
-	if ( __ec) throw __ec;
-	return addr;
+    _VSTD::error_code __ec;
+    address_v4 addr = make_address_v4(__sv, __ec);
+    if ( __ec) throw __ec;
+    return addr;
 }
 
 address_v4 make_address_v4(const char* __s)
@@ -381,64 +394,73 @@ address_v4 make_address_v4(const char* __s, _VSTD::error_code& __ec) noexcept
 
 template<class CharT, class Traits>
 basic_ostream<CharT, Traits>& operator<<(
-	basic_ostream<CharT, Traits>& os, const address_v4& __addr)
+    basic_ostream<CharT, Traits>& os, const address_v4& __addr)
 {
-	for ( char c : __addr.to_string())
-		os << os.widen(c);
-	return os;
+    for ( char c : __addr.to_string())
+        os << os.widen(c);
+    return os;
 }
 
 class address_v6
-	{
+    {
 public:
     typedef __bytes_type<16> bytes_type;
 
-    constexpr address_v6() noexcept : __bytes(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0), __scope_id(0) {}
-    constexpr address_v6(const address_v6& __rhs) noexcept : __bytes(__rhs.__bytes), __scope_id(__rhs.__scope_id)  {}
-    constexpr address_v6(const bytes_type& __b, unsigned long scope = 0) : __bytes(__b), __scope_id(scope) {}
+    constexpr address_v6() noexcept
+        : __bytes(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0), __scope_id(0) {}
+    constexpr address_v6(const address_v6& __rhs) noexcept
+        : __bytes(__rhs.__bytes), __scope_id(__rhs.__scope_id)  {}
+    constexpr address_v6(const bytes_type& __b, unsigned long scope = 0)
+        : __bytes(__b), __scope_id(scope)
+    {
+#if UCHAR_MAX > 0xFF
+    for ( const auto __c : __b )
+        if ( __c > 0xFFF ) throw std::out_of_range{"Octet too big in address_v6::address_v6"};
+#endif
+    }
 
-	address_v6& operator=(const address_v6& __rhs) noexcept
-	{
-		__bytes    = __rhs.__bytes;
-		__scope_id = __rhs.__scope_id;
-		return *this;
-	}
+    address_v6& operator=(const address_v6& __rhs) noexcept
+    {
+        __bytes    = __rhs.__bytes;
+        __scope_id = __rhs.__scope_id;
+        return *this;
+    }
 
-	void scope_id(unsigned long __id) noexcept        { __scope_id = __id; }
-	constexpr unsigned long scope_id() const noexcept { return __scope_id; }
+    void scope_id(unsigned long __id) noexcept        { __scope_id = __id; }
+    constexpr unsigned long scope_id() const noexcept { return __scope_id; }
 
-	constexpr bool is_unspecified() const noexcept
-	{
-	for ( auto const c : __bytes )
-		if ( c != 0 ) return false;
-	return true;
-	}
+    constexpr bool is_unspecified() const noexcept
+    {
+    for ( auto const c : __bytes )
+        if ( c != 0 ) return false;
+    return true;
+    }
   
-	constexpr bool is_loopback() const noexcept
-	{
-	for ( size_t i = 0; i < 15; ++i )
-		if ( __bytes[i] != 0 ) return false;
-	return __bytes[15] == 1;
-	}
+    constexpr bool is_loopback() const noexcept
+    {
+    for ( size_t i = 0; i < 15; ++i )
+        if ( __bytes[i] != 0 ) return false;
+    return __bytes[15] == 1;
+    }
 
-	constexpr bool is_multicast()  const noexcept { return __bytes[0] == 0xFF; }
-	constexpr bool is_link_local() const noexcept { return __bytes[0] == 0xFE && (__bytes[1] & 0xC0) == 0x80; }
-	constexpr bool is_site_local() const noexcept { return __bytes[0] == 0xFE && (__bytes[1] & 0xC0) == 0xC0; }
-	constexpr bool is_v4_mapped()  const noexcept
-	{ 
-	for ( size_t i = 0; i < 10; ++i )
-		if ( __bytes[i] != 0 ) return false;
-	return __bytes[10] == 0xFF && __bytes[11] == 0xFF;
-	}
+    constexpr bool is_multicast()  const noexcept { return __bytes[0] == 0xFF; }
+    constexpr bool is_link_local() const noexcept { return __bytes[0] == 0xFE && (__bytes[1] & 0xC0) == 0x80; }
+    constexpr bool is_site_local() const noexcept { return __bytes[0] == 0xFE && (__bytes[1] & 0xC0) == 0xC0; }
+    constexpr bool is_v4_mapped()  const noexcept
+    { 
+    for ( size_t i = 0; i < 10; ++i )
+        if ( __bytes[i] != 0 ) return false;
+    return __bytes[10] == 0xFF && __bytes[11] == 0xFF;
+    }
 
-	constexpr bool is_multicast_node_local() const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x01; }
-	constexpr bool is_multicast_link_local() const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x02; }
-	constexpr bool is_multicast_site_local() const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x05; }
-	constexpr bool is_multicast_org_local()  const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x08; }
-	constexpr bool is_multicast_global()     const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x0E; }
+    constexpr bool is_multicast_node_local() const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x01; }
+    constexpr bool is_multicast_link_local() const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x02; }
+    constexpr bool is_multicast_site_local() const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x05; }
+    constexpr bool is_multicast_org_local()  const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x08; }
+    constexpr bool is_multicast_global()     const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x0E; }
 
-	constexpr bytes_type to_bytes() const noexcept { return __bytes; }
-	string to_string() const;  // !!! TODO
+    constexpr bytes_type to_bytes() const noexcept { return __bytes; }
+    string to_string() const;  // !!! TODO
 
   // static members:
   static constexpr address_v6 any() noexcept { return address_v6(); }
@@ -446,9 +468,9 @@ public:
   { return address_v6(address_v6::bytes_type{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1}); }
   
 private:
-	bytes_type __bytes;
-	unsigned long __scope_id;
-	};
+    bytes_type __bytes;
+    unsigned long __scope_id;
+    };
 
 //         constexpr address_v6 make_address_v6(const address_v6::bytes_type& bytes,
 //                                              unsigned long scope_id = 0);
@@ -456,17 +478,17 @@ private:
 
 address_v6 make_address_v6(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
 {
-	__ec.assign(EOPNOTSUPP, _VSTD::system_category());
-	return address_v6(); // !!! TODO
+    __ec.assign(EOPNOTSUPP, _VSTD::system_category());
+    return address_v6(); // !!! TODO
 }
 
 address_v6 make_address_v6(_VSTD_LFTS::string_view __sv)
 {
-	_VSTD::error_code __ec;
-	address_v6 addr = make_address_v6(__sv, __ec);
-	if ( __ec) throw __ec;
-	return addr;
-}	
+    _VSTD::error_code __ec;
+    address_v6 addr = make_address_v6(__sv, __ec);
+    if ( __ec) throw __ec;
+    return addr;
+}   
 
 address_v6 make_address_v6(const char* __s)
 { return make_address_v6(__make_sv(__s)); }
@@ -495,11 +517,11 @@ bool operator>=(const address_v6& __x, const address_v6& __y) noexcept
 
 template<class CharT, class Traits>
 basic_ostream<CharT, Traits>& operator<<(
-	basic_ostream<CharT, Traits>& os, const address_v6& __addr)
+    basic_ostream<CharT, Traits>& os, const address_v6& __addr)
 {
-	for ( char c : __addr.to_string())
-		os << os.widen(c);
-	return os;
+    for ( char c : __addr.to_string())
+        os << os.widen(c);
+    return os;
 }
 
 
