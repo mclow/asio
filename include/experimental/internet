@@ -257,11 +257,11 @@ _LIBCPP_BEGIN_NAMESPACE_NETWORK_IP
 
 _VSTD_LFTS::string_view __make_sv (const char *__s) { return _VSTD_LFTS::string_view{__s, strlen(__s)}; }
 
-template <size_t sz>
-struct __bytes_type : _VSTD::array<unsigned char, sz>
+template <size_t _Sz>
+struct __bytes_type : _VSTD::array<unsigned char, _Sz>
     {
         template<class... T> explicit constexpr __bytes_type(T... t)
-            : array<unsigned char, sz>{{static_cast<unsigned char>(t)...}} {}
+            : _VSTD::array<unsigned char, _Sz>{{static_cast<unsigned char>(t)...}} {}
 //         constexpr __bytes_type(const __bytes_type &__rhs)
 //         { memcpy ( &this[0], &__rhs[0], sizeof(*this)); }
 // 
@@ -271,6 +271,18 @@ struct __bytes_type : _VSTD::array<unsigned char, sz>
 //                 memcpy ( &this[0], &__rhs[0], sizeof(*this));
 //             return *this;
 //         }
+        constexpr bool operator==(const __bytes_type &__rhs) const
+        {
+        for ( size_t __i = 0; __i < _Sz; ++__i )
+            if ((*this)[__i] != __rhs[__i]) return false;
+        return true;
+        }
+        constexpr bool operator<(const __bytes_type &__rhs) const
+        {
+        for ( size_t __i = 0; __i < _Sz; ++__i )
+            if ((*this)[__i] < __rhs[__i]) return true;
+        return false;
+        }
     };
 
 class address_v4
@@ -431,8 +443,10 @@ public:
 
     constexpr bool is_unspecified() const noexcept
     {
-    for ( auto const c : __bytes )
-        if ( c != 0 ) return false;
+//     for ( auto const c : __bytes )
+//         if ( c != 0 ) return false;
+    for ( size_t __i = 0; __i < 16; ++__i )
+        if ( __bytes[__i] != 0 ) return false;
     return true;
     }
   
@@ -497,22 +511,22 @@ address_v6 make_address_v6(const char* __s, _VSTD::error_code& __ec) noexcept
 { return make_address_v6(__make_sv(__s), __ec); }
 
 
-bool operator==(const address_v6& __x, const address_v6& __y) noexcept
+constexpr bool operator==(const address_v6& __x, const address_v6& __y) noexcept
 { return (__x.scope_id() == __y.scope_id()) && (__x.to_bytes() == __y.to_bytes()); }
 
-bool operator!=(const address_v6& __x, const address_v6& __y) noexcept
+constexpr bool operator!=(const address_v6& __x, const address_v6& __y) noexcept
 { return !(__x == __y); }
 
-bool operator< (const address_v6& __x, const address_v6& __y) noexcept
+constexpr bool operator< (const address_v6& __x, const address_v6& __y) noexcept
 { return __x.to_bytes() < __y.to_bytes() || (!(__y.to_bytes() < __x.to_bytes()) && __x.scope_id() < __y.scope_id()); }
 
-bool operator> (const address_v6& __x, const address_v6& __y) noexcept
+constexpr bool operator> (const address_v6& __x, const address_v6& __y) noexcept
 { return __y < __x; }
 
-bool operator<=(const address_v6& __x, const address_v6& __y) noexcept
+constexpr bool operator<=(const address_v6& __x, const address_v6& __y) noexcept
 { return !(__y < __x); }
 
-bool operator>=(const address_v6& __x, const address_v6& __y) noexcept
+constexpr bool operator>=(const address_v6& __x, const address_v6& __y) noexcept
 { return !(__x < __y); }
 
 template<class CharT, class Traits>
