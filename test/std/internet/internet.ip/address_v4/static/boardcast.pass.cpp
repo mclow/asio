@@ -12,7 +12,7 @@
 //  class address_v4 {
 //  public:
 //  ...
-// 	static constexpr address_v4 broadcast() noexcept;
+//  static constexpr address_v4 broadcast() noexcept;
 //  static constexpr address_v4 broadcast(const address_v4& addr, const address_v4& mask) noexcept;
 //  ...
 //  };

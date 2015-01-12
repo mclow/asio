@@ -12,7 +12,7 @@
 //  class address_v4 {
 //  public:
 //  ...
-// 	static constexpr address_v4 loopback() noexcept;
+//  static constexpr address_v4 loopback() noexcept;
 //  ...
 //  };
 // 

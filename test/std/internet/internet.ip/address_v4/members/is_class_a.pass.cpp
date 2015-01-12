@@ -12,7 +12,7 @@
 //  class address_v4 {
 //  public:
 //  ...
-// 	constexpr bool is_class_a() const noexcept;
+//  constexpr bool is_class_a() const noexcept;
 //  ...
 //  };
 // 

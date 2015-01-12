@@ -12,7 +12,7 @@
 //  class address_v6 {
 //  public:
 //  ...
-// 	address_v6& operator=(const address_v6& a) noexcept;
+//  address_v6& operator=(const address_v6& a) noexcept;
 //  ...
 //  };
 // 
@@ -32,23 +32,23 @@ namespace ip = std::experimental::network_v1::ip;
 
 int main()
 {
-	static_assert((std::is_nothrow_assignable<ip::address_v6&, ip::address_v6&>::value), "" );
+    static_assert((std::is_nothrow_assignable<ip::address_v6&, ip::address_v6&>::value), "" );
 
     {
     ip::address_v6 addr0;
     ip::address_v6 addr1(ip::address_v6::bytes_type {1,3,5,7,0,0,0,0,0,0,0,0,0,0,0,0});
     ip::address_v6 addr2(ip::address_v6::bytes_type {2,4,6,8,0,0,0,0,0,0,0,0,0,0,0,0});
-	assert( addr0 != addr1 );
-	assert( addr0 != addr2 );
-	assert( addr1 != addr2 );
-	addr0 = addr1;
-	assert( addr0 == addr1 );
-	assert( addr0 != addr2 );
-	assert( addr1 != addr2 );
-	addr0 = addr2;
-	assert( addr0 != addr1 );
-	assert( addr0 == addr2 );
-	assert( addr1 != addr2 );
+    assert( addr0 != addr1 );
+    assert( addr0 != addr2 );
+    assert( addr1 != addr2 );
+    addr0 = addr1;
+    assert( addr0 == addr1 );
+    assert( addr0 != addr2 );
+    assert( addr1 != addr2 );
+    addr0 = addr2;
+    assert( addr0 != addr1 );
+    assert( addr0 == addr2 );
+    assert( addr1 != addr2 );
     static_assert ((noexcept(addr0 = addr1)), "" );
     }
 }
