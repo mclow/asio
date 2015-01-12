@@ -567,12 +567,12 @@ public:
     constexpr address(const address& __rhs) noexcept :
         __atype(__rhs.__atype), __v4(__rhs.__v4), __v6(__rhs.__v6) {}
     
-// 	template<class _Tp>
-// 	constexpr address(const _Tp& __t,
-// 		typename enable_if<
-// 			!_VSTD::is_same<_Tp, address>::value && 
-// 			 _VSTD::is_same<address &, decltype(address_cast<address>(_Tp()))>::value>::type* = 0)
-// 		 noexcept(address_cast<address>(_Tp())) : address(address_cast<address>(__t)) {}
+//  template<class _Tp>
+//  constexpr address(const _Tp& __t,
+//      typename enable_if<
+//          !_VSTD::is_same<_Tp, address>::value && 
+//           _VSTD::is_same<address &, decltype(address_cast<address>(_Tp()))>::value>::type* = 0)
+//       noexcept(address_cast<address>(_Tp())) : address(address_cast<address>(__t)) {}
 
     explicit constexpr address(const address_v4 &__rhs) noexcept :
         __atype(_Address::__ipv4), __v4(__rhs), __v6() {}
@@ -642,11 +642,11 @@ bool operator>=(const address& __lhs, const address& __rhs) noexcept
 // address creation:
 address make_address(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
 {
-	address_v6 __v6 = make_address_v6(__sv, __ec);
-	if (!__ec)
-	 return address(__v6);
-	address_v4 __v4 = make_address_v4(__sv, __ec);
-	return !__ec ? address(__v4) : address ();
+    address_v6 __v6 = make_address_v6(__sv, __ec);
+    if (!__ec)
+     return address(__v6);
+    address_v4 __v4 = make_address_v4(__sv, __ec);
+    return !__ec ? address(__v4) : address ();
 }
 
 address make_address(_VSTD_LFTS::string_view __sv)
@@ -673,13 +673,13 @@ basic_ostream<CharT, Traits>& operator<<(basic_ostream<CharT, Traits>& __os, con
 
 // template <class _Tp, class _Head, class... _Tail>
 // struct __contains0 {
-// 	static const bool value = __contains0<_Tp, _Head>::value
-// 						   || __contains0<_Tp, _Tail...>::value;
+//  static const bool value = __contains0<_Tp, _Head>::value
+//                         || __contains0<_Tp, _Tail...>::value;
 // };
 // 
 // template <class _Tp, class _Head>
 // struct __contains0<_Tp, _Head> {
-// 	static const bool value = std::is_same<_Head, _Tp>::value;
+//  static const bool value = std::is_same<_Head, _Tp>::value;
 // };
 // 
 // template <class _Tp, class... _TypeList>
@@ -693,14 +693,14 @@ basic_ostream<CharT, Traits>& operator<<(basic_ostream<CharT, Traits>& __os, con
 template<> constexpr address    address_cast(const address&    __a) noexcept { return __a; }
 template<> constexpr address_v4 address_cast(const address& __a) noexcept(false)
 {
-	if (!__a.is_v4()) throw bad_address_cast{};
-	return __a.__get_v4();
+    if (!__a.is_v4()) throw bad_address_cast{};
+    return __a.__get_v4();
 }
 
 template<> constexpr address_v6 address_cast(const address& __a) noexcept(false)
 {
-	if (!__a.is_v6()) throw bad_address_cast{};
-	return __a.__get_v6();
+    if (!__a.is_v6()) throw bad_address_cast{};
+    return __a.__get_v6();
 }
 
 // template<class _Tp> constexpr _Tp address_cast(const address_v4&) noexcept;
@@ -717,90 +717,110 @@ template <class _Address>
 class _Address_iterator
 {
 public:
-	typedef _Address                  value_type;
-	typedef ptrdiff_t                 difference_type;
-	typedef const _Address*           pointer;
-	typedef const _Address&           reference;
-	typedef _VSTD::input_iterator_tag iterator_category;
+    typedef _Address                  value_type;
+    typedef ptrdiff_t                 difference_type;
+    typedef const _Address*           pointer;
+    typedef const _Address&           reference;
+    typedef _VSTD::input_iterator_tag iterator_category;
 
-	_Address_iterator() noexcept : __address() {}
-	_Address_iterator(const _Address& __a) noexcept : __address(__a) {}
+    _Address_iterator() noexcept : __address() {}
+    _Address_iterator(const _Address& __a) noexcept : __address(__a) {}
 
-	reference operator*()  const noexcept { return __address; }
-	pointer   operator->() const noexcept { return &__address; }
+    reference operator*()  const noexcept { return __address; }
+    pointer   operator->() const noexcept { return &__address; }
 
-	_Address_iterator& operator++() noexcept
-	{
-		for (auto it = __address.__bytes.rbegin(); it != __address.__bytes.rend(); ++it) {
-			if ( *it < 255 ) {
-				++*it;
-				break;
-				}
-			*it = 0;
-			}
-		return *this;
-	}
+    _Address_iterator& operator++() noexcept
+    {
+        for (auto it = __address.__bytes.rbegin(); it != __address.__bytes.rend(); ++it) {
+            if ( *it < 255 ) {
+                ++*it;
+                break;
+                }
+            *it = 0;
+            }
+        return *this;
+    }
 
-	_Address_iterator operator++(int) noexcept
-	{
-		_Address_iterator __prev = *this;
-		++*this;
-		return __prev;
-	}
+    _Address_iterator operator++(int) noexcept
+    {
+        _Address_iterator __prev = *this;
+        ++*this;
+        return __prev;
+    }
 
-	_Address_iterator& operator--() noexcept {
-		for (auto it = __address.__bytes.rbegin(); it != __address.__bytes.rend(); ++it) {
-			if ( *it > 0 ) {
-				--*it;
-				break;
-				}
-			*it = 255;
-		}
-		return *this;
-	}
-	
-	_Address_iterator  operator--(int) noexcept
-	{
-		_Address_iterator __prev = *this;
-		--*this;
-		return __prev;
-	}
+    _Address_iterator& operator--() noexcept {
+        for (auto it = __address.__bytes.rbegin(); it != __address.__bytes.rend(); ++it) {
+            if ( *it > 0 ) {
+                --*it;
+                break;
+                }
+            *it = 255;
+        }
+        return *this;
+    }
+    
+    _Address_iterator  operator--(int) noexcept
+    {
+        _Address_iterator __prev = *this;
+        --*this;
+        return __prev;
+    }
 
-	bool operator==(const _Address_iterator & __rhs) const noexcept
-	{ return __address == __rhs.__address; }
-	bool operator!=(const _Address_iterator & __rhs) const noexcept
-	{ return !(__address == __rhs.__address); }
+    bool operator==(const _Address_iterator & __rhs) const noexcept
+    { return __address == __rhs.__address; }
+    bool operator!=(const _Address_iterator & __rhs) const noexcept
+    { return !(__address == __rhs.__address); }
 
 private:
-	_Address __address;
+    _Address __address;
 };
 
-// template <class _Address>
-// class _Address_iterator
 class address_range_v4
 {
 public:
-	typedef address_v4          address_type;
-	typedef address_iterator_v4 iterator;
+    typedef address_v4          address_type;
+    typedef address_iterator_v4 iterator;
 
-	// constructors:
-	address_range_v4() noexcept : __b(), __e() {}
-	address_range_v4(const address_type& __f, const address_type& __l) noexcept :
-		__b(__f), __e(__l) {}
+    // constructors:
+    address_range_v4() noexcept : __b(), __e() {}
+    address_range_v4(const address_type& __f, const address_type& __l) noexcept :
+        __b(__f), __e(__l) {}
 
-	iterator begin() const noexcept { return __b; }
-	iterator end() const noexcept   { return __e; }
-	bool empty() const noexcept		{ return __b == __e; }
+    iterator begin() const noexcept { return __b; }
+    iterator end() const noexcept   { return __e; }
+    bool empty() const noexcept     { return __b == __e; }
 
-	size_t size() const noexcept { return __e->to_ulong() - __b->to_ulong(); }
-	iterator find(const address_v4& __a) const noexcept
-	{ return (*__b <= __a && __a < *__e) ? iterator(__a) : __e; }
-		
+    size_t size() const noexcept { return __e->to_ulong() - __b->to_ulong(); }
+    iterator find(const address_type& __a) const noexcept
+    { return (*__b <= __a && __a < *__e) ? iterator(__a) : __e; }
+        
 private:
-	iterator __b;
-	iterator __e;
+    iterator __b;
+    iterator __e;
 };
 
+class address_range_v6
+{
+public:
+    typedef address_v6          address_type;
+    typedef address_iterator_v6 iterator;
+
+    // constructors:
+    address_range_v6() noexcept : __b(), __e() {}
+    address_range_v6(const address_type& __f, const address_type& __l) noexcept :
+        __b(__f), __e(__l) {}
+
+    iterator begin() const noexcept { return __b; }
+    iterator end() const noexcept   { return __e; }
+    bool empty() const noexcept     { return __b == __e; }
+
+    iterator find(const address_type& __a) const noexcept
+    { return (*__b <= __a && __a < *__e) ? iterator(__a) : __e; }
+        
+private:
+    iterator __b;
+    iterator __e;
+};
 
 
 _LIBCPP_END_NAMESPACE_NETWORK_IP
