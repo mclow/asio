@@ -263,6 +263,9 @@ class address_v4;
 class address_v6;
 class bad_address_cast;
 
+struct v4_mapped_t {};
+constexpr v4_mapped_t v4_mapped{};
+
 template <class _Address>
 class _Address_iterator;
 typedef _Address_iterator<address_v4> address_iterator_v4;
@@ -395,34 +398,6 @@ constexpr bool operator>=(const address_v4& __lhs, const address_v4& __rhs) noex
 { return !(__lhs < __rhs); }
 
 
-constexpr address_v4 make_address_v4(const address_v4::bytes_type& __b)
-{ return address_v4(__b); }
-
-constexpr address_v4 make_address_v4(unsigned long __v)
-{ return address_v4(__v); }
-
-//    constexpr address_v4 make_address_v4(v4_mapped_t, const address_v6& a); // !!! TODO
-
-address_v4 make_address_v4(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
-{
-    __ec.assign(EOPNOTSUPP, _VSTD::system_category());
-    return address_v4(); // !!! TODO
-}
-
-address_v4 make_address_v4(_VSTD_LFTS::string_view __sv)
-{
-    _VSTD::error_code __ec;
-    address_v4 addr = make_address_v4(__sv, __ec);
-    if (__ec) throw __ec;
-    return addr;
-}
-
-address_v4 make_address_v4(const char* __s)
-{ return make_address_v4(__make_sv(__s)); }
-
-address_v4 make_address_v4(const char* __s, _VSTD::error_code& __ec) noexcept
-{ return make_address_v4(__make_sv(__s), __ec); }
-
 template<class CharT, class Traits>
 basic_ostream<CharT, Traits>& operator<<(
     basic_ostream<CharT, Traits>& os, const address_v4& __addr)
@@ -506,10 +481,50 @@ private:
     unsigned long __scope_id;
     };
 
+constexpr address_v4 make_address_v4(const address_v4::bytes_type& __b)
+{ return address_v4(__b); }
+
+constexpr address_v4 make_address_v4(unsigned long __v)
+{ return address_v4(__v); }
+
+constexpr address_v4 make_address_v4(v4_mapped_t, const address_v6& __a)
+{
+	if (!__a.is_v4_mapped()) throw bad_address_cast{};
+	const address_v6::bytes_type __6bytes{__a.to_bytes()};
+	address_v4::bytes_type __4bytes{__6bytes[12], __6bytes[13], __6bytes[14], __6bytes[15]};
+	return address_v4(__4bytes);
+}
+
+address_v4 make_address_v4(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
+{
+    __ec.assign(EOPNOTSUPP, _VSTD::system_category());
+    return address_v4(); // !!! TODO
+}
+
+address_v4 make_address_v4(_VSTD_LFTS::string_view __sv)
+{
+    _VSTD::error_code __ec;
+    address_v4 addr = make_address_v4(__sv, __ec);
+    if (__ec) throw __ec;
+    return addr;
+}
+
+address_v4 make_address_v4(const char* __s)
+{ return make_address_v4(__make_sv(__s)); }
+
+address_v4 make_address_v4(const char* __s, _VSTD::error_code& __ec) noexcept
+{ return make_address_v4(__make_sv(__s), __ec); }
+
 constexpr address_v6 make_address_v6(const address_v6::bytes_type& __bytes, unsigned long __id = 0)
 { return address_v6(__bytes, __id); }
 
-//         constexpr address_v6 make_address_v6(v4_mapped_t, const address_v4& a) noexcept;
+constexpr address_v6 make_address_v6(v4_mapped_t, const address_v4& __a) noexcept
+{
+	const address_v4::bytes_type __4bytes{__a.to_bytes()};
+	address_v6::bytes_type __6bytes{ 0, 0, 0, 0, 0, 0, 0, 0,
+				  0, 0, 0xFF, 0xFF, __4bytes[0], __4bytes[1], __4bytes[2], __4bytes[3] };
+  return address_v6(__6bytes);
+}
 
 address_v6 make_address_v6(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
 {
@@ -618,7 +633,16 @@ public:
         throw bad_address_cast{};
     }
 
-    constexpr bool __equal(const address& __rhs) const { return true; } // !!! TODO
+    constexpr bool __equal(const address& __rhs) const
+    {
+    if (__atype == _Address::__ip_none && __rhs.__atype == _Address::__ip_none) return true;
+    if (__atype == _Address::__ip_none || __rhs.__atype == _Address::__ip_none) return false;
+    if (is_v4() && __rhs.is_v4()) return __v4 == __rhs.__v4;
+    if (is_v6() && __rhs.is_v6()) return __v6 == __rhs.__v6;
+	return is_v4()
+		? make_address_v6(v4_mapped, __v4) == __rhs.__v6
+		: __v6 == make_address_v6(v4_mapped, __rhs.__v4);
+    }
     constexpr bool __less (const address& __rhs) const { return true; } // !!! TODO
     constexpr address_v4 __get_v4 () const noexcept { return __v4; }
     constexpr address_v6 __get_v6 () const noexcept { return __v6; }
@@ -626,17 +650,17 @@ public:
     
 
 // address comparisons:
-bool operator==(const address& __lhs, const address& __rhs) noexcept
+constexpr bool operator==(const address& __lhs, const address& __rhs) noexcept
 { return __lhs.__equal(__rhs); }
-bool operator!=(const address& __lhs, const address& __rhs) noexcept
+constexpr bool operator!=(const address& __lhs, const address& __rhs) noexcept
 { return !(__lhs == __rhs); }
-bool operator< (const address& __lhs, const address& __rhs) noexcept
+constexpr bool operator< (const address& __lhs, const address& __rhs) noexcept
 { return __lhs.__less(__rhs); }
-bool operator> (const address& __lhs, const address& __rhs) noexcept
+constexpr bool operator> (const address& __lhs, const address& __rhs) noexcept
 { return __rhs < __lhs; }
-bool operator<=(const address& __lhs, const address& __rhs) noexcept
+constexpr bool operator<=(const address& __lhs, const address& __rhs) noexcept
 { return !(__rhs < __lhs); }
-bool operator>=(const address& __lhs, const address& __rhs) noexcept
+constexpr bool operator>=(const address& __lhs, const address& __rhs) noexcept
 { return !(__lhs < __rhs); }
 
 // address creation:
