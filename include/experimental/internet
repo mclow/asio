@@ -375,9 +375,9 @@ public:
         _VSTD::string ret(16, '0');
         auto it = ret.begin();
         for ( const auto c : __bytes ) {
-            if ( c > 100 )
+            if ( c >= 100 )
                 *it++ += ( c / 100 ) % 10;
-            if ( c > 10 )
+            if ( c >= 10 )
                 *it++  += ( c / 10 ) % 10;
             *it++  += c % 10;
             *it++  = '.';
