@@ -488,8 +488,8 @@ _VSTD::string address_v6::to_string() const // TODO: temporary implementation
 	_VSTD::string ret(48, '0');
 	auto it = ret.begin();
 	for ( const auto c : __bytes ) {
-		*it++ += __to_hex((c >> 4) & 0x0F);
-		*it++ += __to_hex((c     ) & 0x0F);
+		*it++ = __to_hex((c >> 4) & 0x0F);
+		*it++ = __to_hex((c     ) & 0x0F);
 		*it++  = ':';
 		}
 	ret.erase ( --it, ret.end());
