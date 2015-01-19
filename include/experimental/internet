@@ -492,10 +492,10 @@ inline address_v4 make_address_v4(const char* __s, _VSTD::error_code& __ec) noex
 
 inline constexpr address_v4 make_address_v4(v4_mapped_t, const address_v6& __a)
 {
-	if (!__a.is_v4_mapped()) throw bad_address_cast{};
-	const address_v6::bytes_type __6bytes{__a.to_bytes()};
-	address_v4::bytes_type __4bytes{__6bytes[12], __6bytes[13], __6bytes[14], __6bytes[15]};
-	return address_v4(__4bytes);
+    if (!__a.is_v4_mapped()) throw bad_address_cast{};
+    const address_v6::bytes_type __6bytes{__a.to_bytes()};
+    address_v4::bytes_type __4bytes{__6bytes[12], __6bytes[13], __6bytes[14], __6bytes[15]};
+    return address_v4(__4bytes);
 }
 
 
@@ -504,9 +504,9 @@ inline constexpr address_v6 make_address_v6(const address_v6::bytes_type& __byte
 
 inline constexpr address_v6 make_address_v6(v4_mapped_t, const address_v4& __a) noexcept
 {
-	const address_v4::bytes_type __4bytes{__a.to_bytes()};
-	address_v6::bytes_type __6bytes{ 0, 0, 0, 0, 0, 0, 0, 0,
-				  0, 0, 0xFF, 0xFF, __4bytes[0], __4bytes[1], __4bytes[2], __4bytes[3] };
+    const address_v4::bytes_type __4bytes{__a.to_bytes()};
+    address_v6::bytes_type __6bytes{ 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0xFF, 0xFF, __4bytes[0], __4bytes[1], __4bytes[2], __4bytes[3] };
   return address_v6(__6bytes);
 }
 
@@ -615,20 +615,20 @@ public:
 
     constexpr bool __equal(const address& __rhs) const
     {
-//	They're the same type
+//  They're the same type
     if (__atype == _Address::__ip_none && __rhs.__atype == _Address::__ip_none) return true;
     if (is_v4() && __rhs.is_v4()) return __v4 == __rhs.__v4;
     if (is_v6() && __rhs.is_v6()) return __v6 == __rhs.__v6;
 
-//	One of them is empty
+//  One of them is empty
     if (__atype == _Address::__ip_none && __rhs.is_v4()) return address_v4() == __rhs.__v4;
     if (is_v4() && __rhs.__atype == _Address::__ip_none) return __v4 == address_v4();
     if (__atype == _Address::__ip_none && __rhs.is_v6()) return address_v6() == __rhs.__v6;
     if (is_v6() && __rhs.__atype == _Address::__ip_none) return __v6 == address_v6();
 
-	return is_v4()
-		? make_address_v6(v4_mapped, __v4) == __rhs.__v6
-		: __v6 == make_address_v6(v4_mapped, __rhs.__v4);
+    return is_v4()
+        ? make_address_v6(v4_mapped, __v4) == __rhs.__v6
+        : __v6 == make_address_v6(v4_mapped, __rhs.__v4);
     }
 
     constexpr bool __less (const address& __rhs) const { return true; } // !!! TODO

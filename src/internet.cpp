@@ -58,18 +58,18 @@ unsigned __dec_to_num(_Iter __f, _Iter __l)
 template <typename _Iter>
 unsigned __hex_to_num(_Iter __f, _Iter __l)
 {
-	unsigned __ret = 0;
-	char __c;
-	while (__f != __l)
-	{
-		__c = *__f++;
-		__ret *= 16;
-		if ( __c >= '0' && __c <= '9' ) __ret += __c - '0';
-		if ( __c >= 'A' && __c <= 'F' ) __ret += __c + 10 - 'A';
-		if ( __c >= 'a' && __c <= 'f' ) __ret += __c + 10 - 'a';
-	}
+    unsigned __ret = 0;
+    char __c;
+    while (__f != __l)
+    {
+        __c = *__f++;
+        __ret *= 16;
+        if ( __c >= '0' && __c <= '9' ) __ret += __c - '0';
+        if ( __c >= 'A' && __c <= 'F' ) __ret += __c + 10 - 'A';
+        if ( __c >= 'a' && __c <= 'f' ) __ret += __c + 10 - 'a';
+    }
 
-	return __ret;
+    return __ret;
 }
 
 address_v4 make_address_v4(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
