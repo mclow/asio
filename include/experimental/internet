@@ -256,8 +256,8 @@ namespace std {
 
 _LIBCPP_BEGIN_NAMESPACE_NETWORK_IP
 
-_VSTD_LFTS::string_view __make_sv (const char *__s) { return _VSTD_LFTS::string_view{__s, strlen(__s)}; }
-char __to_hex(int __v) { return char(__v > 9 ? 'A' - 10 + __v : '0' + __v); }
+inline _VSTD_LFTS::string_view
+   __make_sv (const char *__s) { return _VSTD_LFTS::string_view{__s, strlen(__s)}; }
 
 
 class address;
@@ -370,22 +370,6 @@ public:
         bytes_type __bytes;
     };
 
-    _VSTD::string address_v4::to_string() const // TODO: temporary implementation
-    {
-        _VSTD::string ret(16, '0');
-        auto it = ret.begin();
-        for ( const auto c : __bytes ) {
-            if ( c >= 100 )
-                *it++ += ( c / 100 ) % 10;
-            if ( c >= 10 )
-                *it++  += ( c / 10 ) % 10;
-            *it++  += c % 10;
-            *it++  = '.';
-            }
-        ret.erase ( --it, ret.end());
-        return ret;
-    }
-    
 constexpr bool operator==(const address_v4& __lhs, const address_v4& __rhs) noexcept
 { return __lhs.to_ulong() == __rhs.to_ulong(); }
 constexpr bool operator!=(const address_v4& __lhs, const address_v4& __rhs) noexcept
@@ -483,40 +467,15 @@ private:
     unsigned long __scope_id;
     };
 
-_VSTD::string address_v6::to_string() const // TODO: temporary implementation
-{
-	_VSTD::string ret(48, '0');
-	auto it = ret.begin();
-	for ( const auto c : __bytes ) {
-		*it++ = __to_hex((c >> 4) & 0x0F);
-		*it++ = __to_hex((c     ) & 0x0F);
-		*it++  = ':';
-		}
-	ret.erase ( --it, ret.end());
-	return ret;
-}
-
-constexpr address_v4 make_address_v4(const address_v4::bytes_type& __b)
+inline constexpr address_v4 make_address_v4(const address_v4::bytes_type& __b)
 { return address_v4(__b); }
 
-constexpr address_v4 make_address_v4(unsigned long __v)
+inline constexpr address_v4 make_address_v4(unsigned long __v)
 { return address_v4(__v); }
 
-constexpr address_v4 make_address_v4(v4_mapped_t, const address_v6& __a)
-{
-	if (!__a.is_v4_mapped()) throw bad_address_cast{};
-	const address_v6::bytes_type __6bytes{__a.to_bytes()};
-	address_v4::bytes_type __4bytes{__6bytes[12], __6bytes[13], __6bytes[14], __6bytes[15]};
-	return address_v4(__4bytes);
-}
+address_v4 make_address_v4(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept;
 
-address_v4 make_address_v4(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
-{
-    __ec.assign(EOPNOTSUPP, _VSTD::system_category());
-    return address_v4(); // !!! TODO
-}
-
-address_v4 make_address_v4(_VSTD_LFTS::string_view __sv)
+inline address_v4 make_address_v4(_VSTD_LFTS::string_view __sv)
 {
     _VSTD::error_code __ec;
     address_v4 addr = make_address_v4(__sv, __ec);
@@ -524,16 +483,26 @@ address_v4 make_address_v4(_VSTD_LFTS::string_view __sv)
     return addr;
 }
 
-address_v4 make_address_v4(const char* __s)
+inline address_v4 make_address_v4(const char* __s)
 { return make_address_v4(__make_sv(__s)); }
 
-address_v4 make_address_v4(const char* __s, _VSTD::error_code& __ec) noexcept
+inline address_v4 make_address_v4(const char* __s, _VSTD::error_code& __ec) noexcept
 { return make_address_v4(__make_sv(__s), __ec); }
 
-constexpr address_v6 make_address_v6(const address_v6::bytes_type& __bytes, unsigned long __id = 0)
+
+inline constexpr address_v4 make_address_v4(v4_mapped_t, const address_v6& __a)
+{
+	if (!__a.is_v4_mapped()) throw bad_address_cast{};
+	const address_v6::bytes_type __6bytes{__a.to_bytes()};
+	address_v4::bytes_type __4bytes{__6bytes[12], __6bytes[13], __6bytes[14], __6bytes[15]};
+	return address_v4(__4bytes);
+}
+
+
+inline constexpr address_v6 make_address_v6(const address_v6::bytes_type& __bytes, unsigned long __id = 0)
 { return address_v6(__bytes, __id); }
 
-constexpr address_v6 make_address_v6(v4_mapped_t, const address_v4& __a) noexcept
+inline constexpr address_v6 make_address_v6(v4_mapped_t, const address_v4& __a) noexcept
 {
 	const address_v4::bytes_type __4bytes{__a.to_bytes()};
 	address_v6::bytes_type __6bytes{ 0, 0, 0, 0, 0, 0, 0, 0,
@@ -541,13 +510,9 @@ constexpr address_v6 make_address_v6(v4_mapped_t, const address_v4& __a) noexcep
   return address_v6(__6bytes);
 }
 
-address_v6 make_address_v6(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
-{
-    __ec.assign(EOPNOTSUPP, _VSTD::system_category());
-    return address_v6(); // !!! TODO
-}
+address_v6 make_address_v6(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept;
 
-address_v6 make_address_v6(_VSTD_LFTS::string_view __sv)
+inline address_v6 make_address_v6(_VSTD_LFTS::string_view __sv)
 {
     _VSTD::error_code __ec;
     address_v6 addr = make_address_v6(__sv, __ec);
@@ -555,10 +520,10 @@ address_v6 make_address_v6(_VSTD_LFTS::string_view __sv)
     return addr;
 }   
 
-address_v6 make_address_v6(const char* __s)
+inline address_v6 make_address_v6(const char* __s)
 { return make_address_v6(__make_sv(__s)); }
 
-address_v6 make_address_v6(const char* __s, _VSTD::error_code& __ec) noexcept
+inline address_v6 make_address_v6(const char* __s, _VSTD::error_code& __ec) noexcept
 { return make_address_v6(__make_sv(__s), __ec); }
 
 
@@ -687,7 +652,7 @@ constexpr bool operator>=(const address& __lhs, const address& __rhs) noexcept
 { return !(__lhs < __rhs); }
 
 // address creation:
-address make_address(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
+inline address make_address(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
 {
     address_v6 __v6 = make_address_v6(__sv, __ec);
     if (!__ec)
@@ -696,7 +661,7 @@ address make_address(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noex
     return !__ec ? address(__v4) : address ();
 }
 
-address make_address(_VSTD_LFTS::string_view __sv)
+inline address make_address(_VSTD_LFTS::string_view __sv)
 {
     _VSTD::error_code __ec;
     address __a = make_address(__sv, __ec);
@@ -704,8 +669,8 @@ address make_address(_VSTD_LFTS::string_view __sv)
     return __a;
 }
 
-address make_address(const char* __s) { return make_address(__make_sv(__s)); }
-address make_address(const char* __s, _VSTD::error_code& __ec) noexcept
+inline address make_address(const char* __s) { return make_address(__make_sv(__s)); }
+inline address make_address(const char* __s, _VSTD::error_code& __ec) noexcept
 { return make_address(__make_sv(__s), __ec); }
 
 
