@@ -26,8 +26,8 @@ int main()
 {
 //     static_assert ( noexcept(ip::address_v6::any()), "" );
 
-	constexpr ip::address_v6::bytes_type b0{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-	constexpr ip::address_v6::bytes_type b1{1,2,3,4,5,6,7,8,7,6,5,4,3,2,1,0};
+    constexpr ip::address_v6::bytes_type b0{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    constexpr ip::address_v6::bytes_type b1{1,2,3,4,5,6,7,8,7,6,5,4,3,2,1,0};
 
     {
     ip::address_v6 addr0 = ip::make_address_v6(b0, 0);

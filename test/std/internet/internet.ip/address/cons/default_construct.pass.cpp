@@ -26,7 +26,7 @@ namespace ip = std::experimental::network_v1::ip;
 int main()
 {
     static_assert((std::is_nothrow_default_constructible<ip::address>::value), "");
-	
+    
     {
     ip::address addr1;
     assert(!addr1.is_v4());

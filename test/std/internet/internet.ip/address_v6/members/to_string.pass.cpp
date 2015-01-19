@@ -26,7 +26,7 @@
 
 namespace ip = std::experimental::network_v1::ip;
 
-//	TODO - implement zero folding
+//  TODO - implement zero folding
 int main()
 {
     assert ( ip::address_v6().to_string()            == "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00" );

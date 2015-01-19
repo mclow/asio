@@ -25,8 +25,8 @@ int main()
 {
 //     static_assert ( noexcept(ip::address_v4::any()), "" );
 
-	constexpr ip::address_v4::bytes_type b0{0,0,0,0};
-	constexpr ip::address_v4::bytes_type b1{1,2,3,4};
+    constexpr ip::address_v4::bytes_type b0{0,0,0,0};
+    constexpr ip::address_v4::bytes_type b1{1,2,3,4};
 
     {
     ip::address_v4 addr0 = ip::make_address_v4(b0);

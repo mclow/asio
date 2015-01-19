@@ -33,8 +33,8 @@ int main()
     {
     ip::address addr0;
     assert(!addr0.is_v6());
-	}
-	
+    }
+    
     {
     ip::address addr0{ip::address_v4()};
     ip::address_v4 v4addr1(ip::address_v4::bytes_type{240,2,3,4});

@@ -29,8 +29,8 @@ int main()
 {
     static_assert ( noexcept(ip::address_v6().to_bytes()), "" );
 
-	constexpr ip::address_v6::bytes_type b1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-	constexpr ip::address_v6::bytes_type b2{0x80,1,2,3,0,0,0,0,8,7,6,5,4,3,2,1};
+    constexpr ip::address_v6::bytes_type b1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    constexpr ip::address_v6::bytes_type b2{0x80,1,2,3,0,0,0,0,8,7,6,5,4,3,2,1};
 
     {
     ip::address_v6 addr0;
