@@ -28,6 +28,16 @@ namespace ip = std::experimental::network_v1::ip;
 
 int main()
 {
-    static_assert ( std::is_base_of<std::bad_cast, ip::bad_address_cast>::value, "" );
-    static_assert ( noexcept(((ip::bad_address_cast *)0)->what()), "" );
+    static_assert ( std::is_base_of<std::bad_cast, ip::bad_address_cast>::value,
+                   "std::is_base_of<std::bad_cast, ip::bad_address_cast>::value" );
+    static_assert(std::is_polymorphic<std::bad_cast>::value,
+                 "std::is_polymorphic<std::bad_cast>::value");
+    static_assert ( noexcept(((ip::bad_address_cast *)0)->what()),
+                   "noexcept(((ip::bad_address_cast *)0)->what())" );
+
+    ip::bad_address_cast b;
+    ip::bad_address_cast b2 = b;
+    b2 = b;
+    const char* w = b2.what();
+    assert(w);
 }
