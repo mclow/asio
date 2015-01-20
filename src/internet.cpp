@@ -106,4 +106,26 @@ address_v6 make_address_v6(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec
     return address_v6{b};
 }
 
+network_v4 make_network_v4(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept
+{
+    __ec.assign(EOPNOTSUPP, _VSTD::system_category()); // !!! TODO
+    return network_v4{};
+}
+
+_VSTD::string network_v4::to_string() const
+{
+    _VSTD::string __s = address().to_string();
+    __s += '/';
+    __s += _VSTD::to_string(prefix_length());
+    return __s;
+}
+
+_VSTD::string network_v6::to_string() const
+{
+    _VSTD::string __s = address().to_string();
+    __s += '/';
+    __s += _VSTD::to_string(prefix_length());
+    return __s;
+}
+
 _LIBCPP_END_NAMESPACE_NETWORK_IP

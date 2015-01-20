@@ -264,6 +264,8 @@ class address;
 class address_v4;
 class address_v6;
 class bad_address_cast;
+class network_v4;
+class network_v6;
 
 struct v4_mapped_t {};
 constexpr v4_mapped_t v4_mapped{};
@@ -455,7 +457,7 @@ public:
     constexpr bool is_multicast_global()     const noexcept { return __bytes[0] == 0xFF && (__bytes[1] & 0x0F) == 0x0E; }
 
     constexpr bytes_type to_bytes() const noexcept { return __bytes; }
-    _VSTD::string to_string() const;  // !!! TODO
+    _VSTD::string to_string() const;
 
   // static members:
   static constexpr address_v6 any() noexcept { return address_v6(); }
@@ -542,11 +544,11 @@ constexpr bool operator>=(const address_v6& __lhs, const address_v6& __rhs) noex
 
 template<class CharT, class Traits>
 basic_ostream<CharT, Traits>& operator<<(
-    basic_ostream<CharT, Traits>& os, const address_v6& __addr)
+basic_ostream<CharT, Traits>& __os, const address_v6& __addr)
 {
     for ( char c : __addr.to_string())
-        os << os.widen(c);
-    return os;
+        __os << __os.widen(c);
+    return __os;
 }
 
 class address
@@ -613,7 +615,7 @@ public:
         throw bad_address_cast{};
     }
 
-    constexpr bool __equal(const address& __rhs) const
+    constexpr bool __equal(const address& __rhs) const // !!! TODO
     {
 //  They're the same type
     if (__atype == _Address::__ip_none && __rhs.__atype == _Address::__ip_none) return true;
@@ -834,6 +836,195 @@ private:
     iterator __e;
 };
 
+
+class network_v4
+{
+public:
+    network_v4() noexcept : __addr{}, __prefix{0} {}
+    network_v4(const address_v4& __a, unsigned short __p) : __addr{__a}, __prefix{__p}
+    { if (__p > 24) throw std::out_of_range{"Prefix too big in network_v4::network_v4"}; }
+//  network_v4(const address_v4& addr, const address_v4& mask); // TODO
+
+    address_v4 address() const noexcept { return __addr; }
+    unsigned short prefix_length() const noexcept { return __prefix; }
+    address_v4 netmask() const noexcept { return address_v4{__get_prefix_bits(__prefix)}; }
+    inline address_v4 network() const noexcept
+    {
+        address_v4::bytes_type __ret = __addr.to_bytes();
+        address_v4::bytes_type __b = __get_prefix_bits(__prefix);
+        for ( unsigned __i = 0; __i < __b.size(); ++__i )
+            __ret[__i] &= __b[__i];
+        return address_v4(__ret);
+    }
+
+    address_v4 broadcast() const noexcept
+    {
+        address_v4::bytes_type __ret = __addr.to_bytes();
+        address_v4::bytes_type __b = __get_prefix_bits(__prefix);
+        for ( unsigned __i = 0; __i < __b.size(); ++__i )
+            __ret[__i] |= ~__b[__i];
+        return address_v4(__ret);
+    }
+
+    address_range_v4 hosts() const noexcept
+    { return address_range_v4{__addr, address_v4{__addr.to_ulong() + __num_addrs()}}; }
+    
+    network_v4 canonical() const noexcept { return network_v4{network(), prefix_length()}; }
+    bool       is_host()   const noexcept { return __prefix == 32; }
+    bool is_subnet_of(const network_v4& other) const noexcept;
+    _VSTD::string to_string() const;
+private:
+    address_v4     __addr;
+    unsigned short __prefix;
+
+    static address_v4::bytes_type __get_prefix_bits(short __p)
+    {
+        address_v4::bytes_type __b{0,0,0,0};
+        for ( int __i = 0; __i < __b.size() && __p > 0; __i++, __p -= 8 )
+            __b[__i] = __p >= 8 ? 0xFF : (0xFF00 >> __p) & 0x00FF;
+        return __b;
+    }
+
+    size_t __num_addrs() const { return is_host() ? 1 : 0xFFFFFFFF >> prefix_length(); }
+    };
+
+inline bool operator==(const network_v4& __lhs, const network_v4& __rhs) noexcept
+{ return __lhs.address() == __rhs.address() && __lhs.prefix_length () == __rhs.prefix_length(); }
+
+inline bool operator!=(const network_v4& __lhs, const network_v4& __rhs) noexcept
+{ return !(__lhs == __rhs); }
+
+// network_v4 creation:
+inline network_v4 make_network_v4(const address_v4& __a, unsigned short __p)
+{ return network_v4(__a, __p); }
+
+// inline network_v4 make_network_v4(const address_v4& __a, const address_v4& __m)
+// { return network_v4(__a, __m); }
+
+network_v4 make_network_v4(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept;
+
+inline network_v4 make_network_v4(_VSTD_LFTS::string_view __sv)
+{
+    _VSTD::error_code __ec;
+    network_v4 __a = make_network_v4(__sv, __ec);
+    if (__ec) throw __ec;
+    return __a;
+}
+
+inline network_v4 make_network_v4(const char* __s) { return make_network_v4(__make_sv(__s)); }
+inline network_v4 make_network_v4(const char* __s, _VSTD::error_code& __ec) noexcept
+{ return make_network_v4(__make_sv(__s), __ec); }
+
+// network_v4 I/O:
+template<class CharT, class Traits>
+basic_ostream<CharT, Traits>& operator<<(
+basic_ostream<CharT, Traits>& __os, const network_v4& __net)
+{
+    for ( char c : __net.to_string())
+        __os << __os.widen(c);
+    return __os;
+}
+
+bool operator==(const network_v6& __lhs, const network_v6& __rhs) noexcept;
+bool operator!=(const network_v6& __lhs, const network_v6& __rhs) noexcept;
+
+class network_v6
+{
+public:
+    // constructors:
+    network_v6() noexcept : __addr{}, __prefix{0} {}
+    network_v6(const address_v6& __a, unsigned short __p) : __addr{__a}, __prefix{__p} {}
+
+    // members:
+    address_v6     address()       const noexcept { return __addr; }
+    unsigned short prefix_length() const noexcept { return __prefix; }
+    address_v6 network() const noexcept
+    {
+        address_v6::bytes_type __ret = __addr.to_bytes();
+        address_v6::bytes_type __b = __get_prefix_bits(__prefix);
+        for ( unsigned __i = 0; __i < __b.size(); ++__i )
+            __ret[__i] &= __b[__i];
+        return address_v6(__ret);
+    }
+
+    address_range_v6 hosts() const noexcept
+    {
+        address_v6::bytes_type __a = address().to_bytes();
+        address_v6::bytes_type __inc = __get_count_bytes(__prefix);
+        unsigned __carry = 0;
+        for ( int __i = __a.size() - 1; __i >= 0; --__i )
+        {
+            unsigned __val = __a[__i] + __inc[__i] + __carry;
+            __carry = __val > 255;
+            __a[__i] = __val & 0x00FF;
+        }
+        return address_range_v6{address(), address_v6{__a}};
+    }
+    
+    network_v6 canonical() const noexcept { return network_v6(network(), prefix_length()); }
+    bool is_host() const noexcept { return __prefix == 128; }
+    bool is_subnet_of(const network_v6& __o) const noexcept
+    {
+        return __o.prefix_length() < prefix_length() && 
+              network_v6(address(), __o.prefix_length()).canonical() == __o.canonical();
+    }
+
+    _VSTD::string to_string() const;
+
+private:
+    address_v6     __addr;
+    unsigned short __prefix;
+
+    static address_v6::bytes_type __get_prefix_bits(short __p)
+    {
+        address_v6::bytes_type __b{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        for ( int __i = 0; __i < __b.size() && __p > 0; __i++, __p -= 8 )
+            __b[__i] = __p >= 8 ? 0xFF : (0xFF00 >> __p) & 0x00FF;
+        return __b;
+    }
+
+    static address_v6::bytes_type __get_count_bytes(short __p)
+    {
+        address_v6::bytes_type __b{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        for ( int __i = __b.size() - 1; __i >= 0 && __p > 0; --__i, __p -= 8 )
+            __b[__i] = __p >= 8 ? 0xFF : (0xFF00 >> __p) & 0x00FF;
+
+        return __b;
+    }
+};
+
+inline bool operator==(const network_v6& __lhs, const network_v6& __rhs) noexcept
+{ return __lhs.address() == __rhs.address() && __lhs.prefix_length () == __rhs.prefix_length(); }
+
+inline bool operator!=(const network_v6& __lhs, const network_v6& __rhs) noexcept
+{ return !(__lhs == __rhs); }
+
+// network_v6 creation:
+inline network_v6 make_network_v6(const address_v6& __a, unsigned short __p)
+{ return network_v6(__a, __p); }
+
+network_v6 make_network_v6(_VSTD_LFTS::string_view __sv, _VSTD::error_code& __ec) noexcept;
+inline network_v6 make_network_v6(_VSTD_LFTS::string_view __sv)
+{
+    _VSTD::error_code __ec;
+    network_v6 __a = make_network_v6(__sv, __ec);
+    if (__ec) throw __ec;
+    return __a;
+}
+
+inline network_v6 make_network_v6(const char* __s) { return make_network_v6(__make_sv(__s)); }
+inline network_v6 make_network_v6(const char* __s, _VSTD::error_code& __ec) noexcept
+{ return make_network_v6(__make_sv(__s), __ec); }
+
+// network_v6 I/O:
+template<class CharT, class Traits>
+basic_ostream<CharT, Traits>& operator<<(
+basic_ostream<CharT, Traits>& __os, const network_v6& __net)
+{
+    for ( char c : __net.to_string())
+        __os << __os.widen(c);
+    return __os;
+}
 
 _LIBCPP_END_NAMESPACE_NETWORK_IP
 
