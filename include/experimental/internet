@@ -1026,6 +1026,130 @@ basic_ostream<CharT, Traits>& __os, const network_v6& __net)
     return __os;
 }
 
+
+template<class _InternetProtocol>
+class basic_endpoint
+{
+public:
+// types:
+    typedef _InternetProtocol         protocol_type;
+    typedef _VSTD_NETWORK_IP::address address_type;
+    typedef unsigned short            port_type;
+
+// constructors:
+    basic_endpoint() : __addr{address_v4{}}, __port{0} {}
+    basic_endpoint(const protocol_type& __proto, port_type __p)
+        : __addr{__proto == protocol_type::v6() ? address_type{address_v6{}} : address_type{address_v4{}}},
+          __port{__p} {}
+    basic_endpoint(const address_type& __a, port_type __p)
+        : __addr{__a}, __port{__p} {}
+        
+// members:
+    protocol_type protocol() const { return __addr.is_v6() ? protocol_type::V6() : protocol_type::V4(); }
+    address_type address() const          { return __addr; }
+    void address(const address_type& __a) { __addr = __a; }
+    port_type port() const                { return __port; }
+    void port(port_type __p)              { __port = __p; }
+private:
+    address_type __addr;
+    port_type __port;
+    
+/*
+    unspecified* data();
+    const unspecified* data() const;
+    size_t size() const;
+    void resize(size_t s);
+    size_t capacity() const;
+    // remainder unchanged
+    private:
+    //        sockaddr_storage data_;  exposition only
+*/
+
+};
+
+// basic_endpoint comparisons:
+template<class _InternetProtocol>
+bool operator==(const basic_endpoint<_InternetProtocol>& __lhs,
+                const basic_endpoint<_InternetProtocol>& __rhs)
+{ return __lhs.address() == __rhs.address() && __lhs.port() == __rhs.port(); }
+
+template<class _InternetProtocol>
+bool operator!=(const basic_endpoint<_InternetProtocol>& __lhs,
+                const basic_endpoint<_InternetProtocol>& __rhs) { return !(__lhs == __rhs); }
+
+template<class _InternetProtocol>
+bool operator< (const basic_endpoint<_InternetProtocol>& __lhs,
+                const basic_endpoint<_InternetProtocol>& __rhs)
+{ __lhs.address() < __rhs.address() || (!(__rhs.address() < __lhs.address()) && __lhs.port() < __rhs.port()); }
+
+template<class _InternetProtocol>
+bool operator> (const basic_endpoint<_InternetProtocol>& __lhs,
+                const basic_endpoint<_InternetProtocol>& __rhs) { return __rhs < __lhs; }
+
+template<class _InternetProtocol>
+bool operator<=(const basic_endpoint<_InternetProtocol>& __lhs,
+                const basic_endpoint<_InternetProtocol>& __rhs) { return !(__rhs < __lhs); }
+
+template<class _InternetProtocol>
+bool operator>=(const basic_endpoint<_InternetProtocol>& __lhs,
+                const basic_endpoint<_InternetProtocol>& __rhs) { return (!__lhs < __rhs); }
+
+// basic_endpoint I/O:
+template<class CharT, class Traits, class _InternetProtocol>
+basic_ostream<CharT, Traits>& operator<<( basic_ostream<CharT, Traits>& __os,
+                                          const basic_endpoint<_InternetProtocol>& __ep)
+{
+    if ( __ep.protocol() == _InternetProtocol::V6())
+        __os << __os.widen('[') << __ep.address() << __os.widen(']');
+    else
+        __os << __ep.address();
+    __os << __os.widen(':') << __ep.port();
+    return __os;
+}
+
+class resolver_query_base
+{
+public:
+    typedef uint32_t flags;
+    static const flags passive            = 0x00000001; /* AI_PASSIVE */
+    static const flags canonical_name     = 0x00000002; /* AI_CANONNAME */
+    static const flags numeric_host       = 0x00000004; /* AI_NUMERICHOST */ 
+    static const flags numeric_service    = 0x00001000; /* AI_NUMERICSERV */
+    static const flags v4_mapped          = 0x00000800; /* AI_V4MAPPED */
+    static const flags all_matching       = 0x00000100; /* AI_ALL */
+    static const flags address_configured = 0x00000400; /* AI_ADDRCONFIG */
+
+protected:
+    resolver_query_base() {}
+    ~resolver_query_base() {}
+};
+
+template<class _InternetProtocol>
+class basic_resolver_entry
+{
+public:
+    typedef _InternetProtocol                    protocol_type;
+    typedef typename _InternetProtocol::endpoint endpoint_type;
+
+    basic_resolver_entry()
+        : __endpoint{basic_endpoint<_InternetProtocol>{}}, __host{}, __service{} {}
+    basic_resolver_entry(const endpoint_type& __ep, 
+                            _VSTD_LFTS::string_view __h, _VSTD_LFTS::string_view __s)
+        : __endpoint{__ep}, __host{__h.begin(), __h.end()}, __service{__s.begin(), __s.end()} {}
+
+    endpoint_type endpoint() const      { return __endpoint; }
+    operator endpoint_type() const      { return __endpoint; }
+    _VSTD::string host_name() const     { return __host; }
+    _VSTD::string service_name() const  { return __service; }
+private:
+    endpoint_type   __endpoint;
+    _VSTD::string   __host;
+    _VSTD::string   __service;
+    };
+
+
+
+
 _LIBCPP_END_NAMESPACE_NETWORK_IP
 
 #endif
