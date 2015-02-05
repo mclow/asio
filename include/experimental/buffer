@@ -342,7 +342,9 @@ namespace std {
 
 #include <experimental/__net_config>
 #include <system_error>
+#include <stdexcept>
 #include <string>
+
 #include <experimental/string_view>
 
 _LIBCPP_BEGIN_NAMESPACE_NETWORK
@@ -678,6 +680,83 @@ const_buffers_1 buffer(const _VSTD_LFTS::basic_string_view<_CharT, _Traits> __sv
 template<class _CharT, class _Traits>
 const_buffers_1 buffer(const _VSTD_LFTS::basic_string_view<_CharT, _Traits> __sv, size_t __n) noexcept
 { return const_buffers_1(static_cast<const void *>(__sv.data()), _VSTD::min(__sv.size() * sizeof(_CharT), __n)); }
+
+
+template<class _Tp, class _Storage>
+class __dynamic_buffer
+{
+public:
+	typedef const_buffers_1   const_buffers_type;
+	typedef mutable_buffers_1 mutable_buffers_type;
+	
+	explicit __dynamic_buffer(_Storage& __vec) noexcept
+		: __data(__vec), __size(__vec.size()), __max_size(__vec.max.size()) {}
+	__dynamic_buffer(_Storage& __vec, size_t __maximum_size) noexcept
+		: __data(__vec), __size(__vec.size()), __max_size(__maximum_size) {}
+	__dynamic_buffer(__dynamic_buffer&&) = default;
+
+	size_t size() const noexcept     { return __size; }
+	size_t max_size() const noexcept { return __max_size; }
+	size_t capacity() const noexcept { return __data.capacity(); }
+	const_buffers_type data() const noexcept { return const_buffers_type(__data, __size); }
+
+	mutable_buffers_type prepare(size_t __n)
+	{
+		if (size() + __n > __max_size)
+			throw std::length_error{"dynamic_buffer::prepare"};
+		__data.resize(__size + __n);
+		return mutable_buffers_type(__data, __size);
+	}
+
+	void commit(size_t __n)
+	{
+		__size += _VSTD::min(__n, __data.size() - __size);
+		__data.resize(__size);
+	}
+	
+	void consume(size_t __n)
+	{
+		size_t __m = _VSTD::min(__n, __size);
+		__data.erase(__data.begin(), __data.begin() + __m);
+		__size -= __m;
+	}
+
+private:
+	_Storage&    __data;
+	size_t       __size;
+	const size_t __max_size;
+};
+
+// The dynamic_vector_buffer class template meets the requirements for DynamicBufferSequence.
+// The dynamic_vector_buffer class template requires that T is a POD type and that sizeof(T) == 1.
+template<class _Tp, class _Allocator>
+using dynamic_vector_buffer = __dynamic_buffer<_Tp, _VSTD::vector<_Tp, _Allocator>>;
+
+// The dynamic_vector_buffer class template meets the requirements for DynamicBufferSequence.
+// The dynamic_string_buffer class template requires that sizeof(CharT) == 1.
+template<class _CharT, class _Traits, class _Allocator>
+using dynamic_string_buffer = __dynamic_buffer<_CharT, _VSTD::basic_string<_CharT, _Traits, _Allocator>>;
+
+// dynamic buffer creation:
+template<class _Tp, class _Allocator>
+dynamic_vector_buffer<_Tp, _Allocator>
+dynamic_buffer(vector<_Tp, _Allocator>& __vec) noexcept
+{ return dynamic_vector_buffer<_Tp, _Allocator>(__vec); }
+
+template<class _Tp, class _Allocator>
+dynamic_vector_buffer<_Tp, _Allocator> 
+dynamic_buffer(vector<_Tp, _Allocator>& __vec, size_t __n) noexcept
+{ return dynamic_vector_buffer<_Tp, _Allocator>(__vec, __n); }
+
+template<class _CharT, class _Traits, class _Allocator>
+dynamic_string_buffer<_CharT, _Traits, _Allocator>
+dynamic_buffer(basic_string<_CharT, _Traits, _Allocator>& __str) noexcept
+{  return dynamic_string_buffer<_CharT, _Traits, _Allocator>(__str); }
+
+template<class _CharT, class _Traits, class _Allocator>
+dynamic_string_buffer<_CharT, _Traits, _Allocator>
+dynamic_buffer(basic_string<_CharT, _Traits, _Allocator>& __str, size_t __n) noexcept
+{  return dynamic_string_buffer<_CharT, _Traits, _Allocator>(__str, __n); }
 
 _LIBCPP_END_NAMESPACE_NETWORK
 
