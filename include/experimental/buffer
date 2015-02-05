@@ -341,5 +341,344 @@ namespace std {
 
 
 #include <experimental/__net_config>
+#include <system_error>
+#include <string>
+#include <experimental/string_view>
+
+_LIBCPP_BEGIN_NAMESPACE_NETWORK
+
+enum class stream_errc { // TODO need real values here
+    eof       = 0x12345, // implementation defined,
+    not_found = 0x12346  // implementation defined
+};
+
+const _VSTD::error_category& stream_category() noexcept;
+
+ _VSTD::error_code make_error_code(stream_errc __e) noexcept
+ { return _VSTD::error_code(static_cast<int>(__e), stream_category()); }
+ 
+_VSTD::error_condition make_error_condition(stream_errc __e) noexcept
+ { return _VSTD::error_condition(static_cast<int>(__e), stream_category()); }
+
+class mutable_buffer
+{
+public:
+    mutable_buffer() noexcept : __data(nullptr), __size(0) {}
+    mutable_buffer(void* __p, size_t __n) noexcept : __data(__p), __size(__n) {}
+    
+//  Marshall's extensions
+    void * data() const { return __data; }
+    size_t size() const { return __size; }
+
+private:
+    void*  __data;
+    size_t __size;
+};
+
+class const_buffer
+{
+public:
+    const_buffer() noexcept : __data(nullptr), __size(0) {}
+    const_buffer(const void* __p, size_t __n) noexcept : __data(__p), __size(__n) {}
+    const_buffer(const mutable_buffer &__b) noexcept : __data(__b.data()), __size(__b.size()) {}
+
+//  Marshall's extensions
+    const void * data() const { return __data; }
+    size_t       size() const { return __size; }
+
+private:
+    const void*  __data;
+          size_t __size;
+};
+
+class mutable_buffers_1;
+
+// An object of class const_buffers_1 represents a sequence of exactly one const_buffer object.
+// The const_buffers_1 class meets the requirements for ConstBufferSequence and ConvertibleToConstBuffer.
+class const_buffers_1 : public const_buffer
+{
+public:
+    typedef const_buffer value_type;
+    typedef const value_type *const_iterator;
+
+    const_buffers_1(const void* __p, size_t __n) noexcept : const_buffer(__p, __n) {}
+    explicit const_buffers_1(const const_buffer& __b) noexcept : const_buffer(__b) {}
+
+    const_iterator begin() const noexcept { return this; }
+    const_iterator end()   const noexcept { return begin() + 1; }
+};
+
+// An object of class mutable_buffers_1 represents a sequence of exactly one mutable_buffer object.
+// The mutable_buffers_1 class meets the requirements for MutableBufferSequence, 
+//    ConstBufferSequence, ConvertibleToMutableBuffer, and ConvertibleToConstBuffer.
+class mutable_buffers_1 : public mutable_buffer
+{
+public:
+    typedef mutable_buffer value_type;
+    typedef const value_type *const_iterator;
+
+    mutable_buffers_1(void* __p, size_t __n) noexcept : mutable_buffer(__p, __n) {}
+    explicit mutable_buffers_1(const mutable_buffer& __b) noexcept : mutable_buffer(__b) {}
+
+    const_iterator begin() const noexcept { return this; }
+    const_iterator end()   const noexcept { return begin() + 1; }
+};
+
+
+
+// buffer type traits:
+template<class T> struct is_mutable_buffer_sequence  : public _VSTD::true_type {}; // TODO
+template<class T> struct is_const_buffer_sequence    : public _VSTD::true_type {}; // TODO
+template<class T> struct is_dynamic_buffer_sequence  : public _VSTD::true_type {}; // TODO
+
+// buffer conversions:
+template<class _Tp>
+_Tp buffer_cast(const const_buffer& __b) noexcept   { return static_cast<_Tp>(__b.data()); }
+
+template<class _Tp>
+_Tp buffer_cast(const mutable_buffer& __b) noexcept { return static_cast<_Tp>(__b.data()); }
+
+// buffer size:
+size_t buffer_size(const const_buffer&   __b) noexcept { return __b.size(); }
+size_t buffer_size(const mutable_buffer& __b) noexcept { return __b.size(); }
+
+mutable_buffer operator+(const mutable_buffer& __b, size_t __n) noexcept
+{
+	size_t __sz = _VSTD::min(buffer_size(__b), __n);
+	return mutable_buffer(buffer_cast<char *>(__b) + __sz, buffer_size(__b) - __sz);
+}
+mutable_buffer operator+(size_t __n, const mutable_buffer& __b) noexcept { return __b + __n; }
+
+const_buffer operator+(const const_buffer& __b, size_t __n) noexcept
+{
+	size_t __sz = _VSTD::min(buffer_size(__b), __n);
+	return const_buffer(buffer_cast<const char *>(__b) + __sz, buffer_size(__b) - __sz);
+}
+const_buffer operator+(size_t __n, const const_buffer& __b) noexcept { return __b + __n; }
+
+mutable_buffers_1 operator+(const mutable_buffers_1& __b, size_t __n) noexcept
+{
+	size_t __sz = _VSTD::min(buffer_size(__b), __n);
+	return mutable_buffers_1(buffer_cast<char *>(__b) + __sz, buffer_size(__b) - __sz);
+}
+mutable_buffers_1 operator+(size_t __n, const mutable_buffers_1& __b) noexcept { return __b + __n; }
+
+const_buffers_1 operator+(const const_buffers_1& __b, size_t __n) noexcept
+{
+	size_t __sz = _VSTD::min(buffer_size(__b), __n);
+	return const_buffers_1(buffer_cast<const char *>(__b) + __sz, buffer_size(__b) - __sz);
+}
+const_buffers_1 operator+(size_t __n, const const_buffers_1& __b) noexcept { return __b + __n; }
+
+
+template <class _ConstBufferSequence>
+typename _VSTD::enable_if<is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
+buffer_size(const _ConstBufferSequence& __bs) noexcept
+{
+    size_t __total = 0;
+    for (const auto& __v: __bs)
+        __total += buffer_size(const_buffer(__v));
+    return __total;
+}
+
+
+size_t buffer_copy(const mutable_buffer& __d, const const_buffer& __s) noexcept
+{
+    size_t __ret = _VSTD::min(buffer_size(__s), buffer_size(__d));
+    _VSTD::memcpy(buffer_cast<void *>(__d), buffer_cast<const void *>(__s), __ret);
+    return __ret;
+}
+
+size_t buffer_copy(const mutable_buffer& __d, const const_buffer& __s, size_t __max) noexcept
+{
+    size_t __ret = _VSTD::min(__max,
+                   _VSTD::min(buffer_size(__s), buffer_size(__d)));
+    _VSTD::memcpy(buffer_cast<void *>(__d), buffer_cast<const void *>(__s), __ret);
+    return __ret;
+}
+
+template<class _ConstBufferSequence>
+size_t buffer_copy(const mutable_buffer& __d, const _ConstBufferSequence& __s, size_t __max) noexcept
+{
+    mutable_buffer __temp = __d;
+    size_t __space = _VSTD::min(buffer_size(__temp), __max);
+    size_t __n = 0;
+    for ( typename _ConstBufferSequence::const_iterator __iter = __s.begin();
+            __space > 0 && __iter != __s.end(); ++__iter, __space -= __n)
+    {
+    	__n = buffer_copy(__temp, *__iter, __space);
+    	__temp = __temp + __n;
+    }
+    return buffer_size(__d) - __space;
+}
+
+template<class _ConstBufferSequence>
+typename _VSTD::enable_if<is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
+buffer_copy(const mutable_buffer& __d, const _ConstBufferSequence& __s) noexcept
+{ return buffer_copy(__d, __s, _VSTD::numeric_limits<size_t>::max()); }
+
+template<class _MutableBufferSequence>
+typename _VSTD::enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::value, size_t>::type
+buffer_copy(const _MutableBufferSequence& __d, const const_buffer& __s,  size_t __max) noexcept
+{
+    const_buffer __temp = __s;
+    size_t __space = _VSTD::min(__max, buffer_size(__temp));
+    size_t __n = 0;
+    for ( typename _MutableBufferSequence::const_iterator __iter = __d.begin();
+                   __space > 0 && __iter != __d.end(); ++__iter, __space -= __n)
+        {
+    	__n = buffer_copy(*__iter, __temp, __space);
+    	__temp = __temp + __n;
+        }
+    return _VSTD::min(__max, buffer_size(__s)) - __space;
+}
+
+
+template<class _MutableBufferSequence>
+typename _VSTD::enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::value, size_t>::type
+buffer_copy(const _MutableBufferSequence& __d, const const_buffer& __s) noexcept
+{ return buffer_copy(__d, __s, _VSTD::numeric_limits<size_t>::max()); }
+
+
+template<class _MutableBufferSequence, class _ConstBufferSequence>
+typename _VSTD::enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::value
+                       && is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
+buffer_copy(const _MutableBufferSequence& __d, const _ConstBufferSequence& __s, size_t __max) noexcept
+{
+	size_t __ret = 0;
+	size_t __sOffset = 0;
+	size_t __dOffset = 0;
+	typename _MutableBufferSequence::const_iterator __dIter  = __d.begin();
+	typename _ConstBufferSequence::const_iterator   __sIter  = __s.begin();
+	while (__ret < __max && __dIter != __d.end() && __sIter != __s.end())
+	{
+		typename _ConstBufferSequence::value_type __source = *__sIter + __sOffset;
+		typename _MutableBufferSequence::value_type __dest = *__dIter + __dOffset;
+		size_t __n = buffer_copy(__dest, __source, __max - __ret);
+
+		if ( __n != buffer_size(__source))
+			__sOffset += __n;
+		else {
+			__sIter++;
+			__sOffset = 0;
+			}
+
+		if ( __n != buffer_size(__dest))
+			__dOffset += __n;
+		else {
+			__dIter++;
+			__dOffset = 0;
+			}
+
+		__ret += __n;
+	}
+	return __ret;
+}
+
+template<class _MutableBufferSequence, class _ConstBufferSequence>
+typename _VSTD::enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::value
+                       && is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
+buffer_copy(const _MutableBufferSequence& __d, const _ConstBufferSequence& __s) noexcept
+{ return buffer_copy(__d, __s, _VSTD::numeric_limits<size_t>::max()); }
+
+
+mutable_buffers_1 buffer(      void* __p, size_t __n) noexcept { return mutable_buffers_1(__p, __n); }
+const_buffers_1   buffer(const void* __p, size_t __n) noexcept { return const_buffers_1  (__p, __n); }
+mutable_buffers_1 buffer(const mutable_buffer& __b) noexcept { return mutable_buffers_1(__b); }
+const_buffers_1   buffer(const const_buffer&   __b) noexcept { return const_buffers_1  (__b); }
+
+mutable_buffers_1 buffer(const mutable_buffer& __b, size_t __n) noexcept
+{ return mutable_buffers_1(buffer_cast<void*>(__b),_VSTD::min(buffer_size(__b), __n)); }
+
+const_buffers_1   buffer(const const_buffer&   __b, size_t __n) noexcept
+{ return const_buffers_1  (buffer_cast<const void*>(__b),_VSTD::min(buffer_size(__b), __n)); }
+
+// built-in arrays
+template<class _Tp, size_t _N>
+mutable_buffers_1 buffer(_Tp (&__arr)[_N]) noexcept
+{ return mutable_buffers_1(static_cast<void *>(__arr), _N * sizeof(_Tp)); }
+
+template<class _Tp, size_t _N>
+mutable_buffers_1 buffer(_Tp (&__arr)[_N], size_t __n) noexcept
+{ return mutable_buffers_1(static_cast<void *>(__arr), _VSTD::min(_N * sizeof(_Tp), __n)); }
+
+template<class _Tp, size_t _N>
+const_buffers_1 buffer(const _Tp (&__arr)[_N]) noexcept
+{ return const_buffers_1(static_cast<const void *>(__arr), _N * sizeof(_Tp)); }
+
+template<class _Tp, size_t _N>
+const_buffers_1 buffer(const _Tp (&__arr)[_N], size_t __n) noexcept
+{ return const_buffers_1(static_cast<const void *>(__arr), _VSTD::min(_N * sizeof(_Tp), __n)); }
+
+// std::array 
+template<class _Tp, size_t _N>
+mutable_buffers_1 buffer(_VSTD::array<_Tp, _N>& __arr) noexcept
+{ return mutable_buffers_1(static_cast<void *>(__arr.data()), _N * sizeof(_Tp)); }
+
+template<class _Tp, size_t _N>
+mutable_buffers_1 buffer(_VSTD::array<_Tp, _N>& __arr, size_t __n) noexcept
+{ return mutable_buffers_1(static_cast<void *>(__arr.data()), _VSTD::min(_N * sizeof(_Tp), __n)); }
+
+template<class _Tp, size_t _N>
+const_buffers_1 buffer(_VSTD::array<const _Tp, _N>& __arr) noexcept
+{ return const_buffers_1(static_cast<const void *>(__arr.data()), _N * sizeof(_Tp)); }
+
+template<class _Tp, size_t _N>
+const_buffers_1 buffer(_VSTD::array<const _Tp, _N>& __arr, size_t __n) noexcept
+{ return const_buffers_1(static_cast<const void *>(__arr.data()), _VSTD::min(_N * sizeof(_Tp), __n)); }
+
+template<class _Tp, size_t _N>
+const_buffers_1 buffer(const _VSTD::array<_Tp, _N>& __arr) noexcept
+{ return const_buffers_1(static_cast<const void *>(__arr.data()), _N * sizeof(_Tp)); }
+
+template<class _Tp, size_t _N>
+const_buffers_1 buffer(const _VSTD::array<_Tp, _N>& __arr, size_t __n) noexcept
+{ return const_buffers_1(static_cast<const void *>(__arr.data()), _VSTD::min(_N * sizeof(_Tp), __n)); }
+
+
+// std::vector
+template<class _Tp, class _Allocator>
+mutable_buffers_1 buffer(_VSTD::vector<_Tp, _Allocator>& __v) noexcept
+{ return mutable_buffers_1(static_cast<void *>(__v.data()), __v.size() * sizeof(_Tp)); }
+
+template<class _Tp, class _Allocator>
+mutable_buffers_1 buffer(_VSTD::vector<_Tp, _Allocator>& __v, size_t __n) noexcept
+{ return mutable_buffers_1(static_cast<void *>(__v.data()), _VSTD::min(__v.size() * sizeof(_Tp), __n)); }
+
+template<class _Tp, class _Allocator>
+const_buffers_1 buffer(const _VSTD::vector<_Tp, _Allocator>& __v) noexcept
+{ return const_buffers_1(static_cast<const void *>(__v.data()), __v.size() * sizeof(_Tp)); }
+
+template<class _Tp, class _Allocator>
+const_buffers_1 buffer(const _VSTD::vector<_Tp, _Allocator>& __v, size_t __n) noexcept
+{ return const_buffers_1(static_cast<const void *>(__v.data()), _VSTD::min(__v.size() * sizeof(_Tp), __n)); }
+
+// std::basic_string
+template<class _CharT, class _Traits, class _Allocator>
+mutable_buffers_1 buffer(_VSTD::basic_string<_CharT, _Traits, _Allocator>& __str) noexcept
+{ return mutable_buffers_1(static_cast<void *>(__str.data()), __str.size() * sizeof(_CharT)); }
+
+template<class _CharT, class _Traits, class _Allocator>
+mutable_buffers_1 buffer(_VSTD::basic_string<_CharT, _Traits, _Allocator>& __str, size_t __n) noexcept
+{ return mutable_buffers_1(static_cast<void *>(__str.data()), _VSTD::min(__str.size() * sizeof(_CharT), __n)); }
+
+template<class _CharT, class _Traits, class _Allocator>
+const_buffers_1 buffer(const _VSTD::basic_string<_CharT, _Traits, _Allocator>& __str) noexcept
+{ return const_buffers_1(static_cast<const void *>(__str.data()), __str.size() * sizeof(_CharT)); }
+
+template<class _CharT, class _Traits, class _Allocator>
+const_buffers_1 buffer(const _VSTD::basic_string<_CharT, _Traits, _Allocator>& __str, size_t __n) noexcept
+{ return const_buffers_1(static_cast<const void *>(__str.data()), _VSTD::min(__str.size() * sizeof(_CharT), __n)); }
+
+// std::basic_string_view
+template<class _CharT, class _Traits>
+const_buffers_1 buffer(const _VSTD_LFTS::basic_string_view<_CharT, _Traits> __sv) noexcept
+{ return const_buffers_1(static_cast<const void *>(__sv.data()), __sv.size() * sizeof(_CharT)); }
+
+template<class _CharT, class _Traits>
+const_buffers_1 buffer(const _VSTD_LFTS::basic_string_view<_CharT, _Traits> __sv, size_t __n) noexcept
+{ return const_buffers_1(static_cast<const void *>(__sv.data()), _VSTD::min(__sv.size() * sizeof(_CharT), __n)); }
+
+_LIBCPP_END_NAMESPACE_NETWORK
 
 #endif
