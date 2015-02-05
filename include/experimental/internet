@@ -270,6 +270,22 @@ class network_v6;
 struct v4_mapped_t {};
 constexpr v4_mapped_t v4_mapped{};
 
+enum class resolver_errc {
+    host_not_found = 8,           // EAI_NONAME
+    host_not_found_try_again = 2, // EAI_AGAIN
+    service_not_found = 9         // EAI_SERVICE
+};
+
+const _VSTD::error_category& resolver_category() noexcept;
+
+ _VSTD::error_code make_error_code(resolver_errc __e) noexcept
+ { return _VSTD::error_code(static_cast<int>(__e), resolver_category()); }
+ 
+_VSTD::error_condition make_error_condition(resolver_errc __e) noexcept
+ { return _VSTD::error_condition(static_cast<int>(__e), resolver_category()); }
+
+
+
 template <class _Address>
 class _Address_iterator;
 typedef _Address_iterator<address_v4> address_iterator_v4;
@@ -615,7 +631,7 @@ public:
         throw bad_address_cast{};
     }
 
-    constexpr bool __equal(const address& __rhs) const // !!! TODO
+    constexpr bool __equal(const address& __rhs) const // TODO
     {
 //  They're the same type
     if (__atype == _Address::__ip_none && __rhs.__atype == _Address::__ip_none) return true;
@@ -633,7 +649,7 @@ public:
         : __v6 == make_address_v6(v4_mapped, __rhs.__v4);
     }
 
-    constexpr bool __less (const address& __rhs) const { return true; } // !!! TODO
+    constexpr bool __less (const address& __rhs) const { return true; } // TODO
     constexpr address_v4 __get_v4 () const noexcept { return __v4; }
     constexpr address_v6 __get_v6 () const noexcept { return __v6; }
     };
@@ -1147,7 +1163,156 @@ private:
     _VSTD::string   __service;
     };
 
+#if 0
+//  This is missing some stuff in the doc; like how to get info out of the object.
+template<class _InternetProtocol>
+class basic_resolver_query : public resolver_query_base
+{
+public:
+    typedef _InternetProtocol protocol_type;
 
+    basic_resolver_query();
+    basic_resolver_query(_VSTD_LFTS::string_view __s,
+                         flags __f = passive | address_configured);
+    basic_resolver_query(const InternetProtocol& __p, _VSTD_LFTS::string_view __s, 
+                         flags __f = passive | address_configured);
+    basic_resolver_query(_VSTD_LFTS::string_view __h, _VSTD_LFTS::string_view __s, 
+                         flags __f = address_configured);
+    basic_resolver_query(const InternetProtocol& __p, _VSTD_LFTS::string_view __h,
+                         _VSTD_LFTS::string_view __s, flags __f = address_configured);
+private:
+    _VSTD::string __host;
+    _VSTD::string __service;
+};
+
+//  There's a lot missing here, too.
+template<class _InternetProtocol>
+class basic_resolver_iterator
+{
+public:
+// types:
+    typedef basic_resolver_entry<_InternetProtocol>        value_type;
+    typedef ptrdiff_t                                      difference_type;
+    typedef const basic_resolver_entry<_InternetProtocol>* pointer;
+    typedef const basic_resolver_entry<_InternetProtocol>& reference;
+    typedef forward_iterator_tag                           iterator_category;
+    typedef _InternetProtocol                              protocol_type;
+    typedef typename _InternetProtocol::endpoint           endpoint_type;
+
+    basic_resolver_iterator();
+
+// other members as required by C++ Std [forward.iterators]
+    reference operator*() const;
+    pointer   operator->() const;
+    basic_resolver_iterator& operator++();
+    basic_resolver_iterator& operator++(int); // should this be '&'
+    
+};
+
+template<class _InternetProtocol>
+bool
+operator==(const basic_resolver_iterator<_InternetProtocol>& __lhs, basic_resolver_iterator<_InternetProtocol>& __rhs);
+
+template<class _InternetProtocol>
+bool
+operator!=(const basic_resolver_iterator<_InternetProtocol>& __lhs, basic_resolver_iterator<_InternetProtocol>& __rhs)
+{ return !(__lhs == __rhs); }
+
+
+
+template<class _InternetProtocol>
+class basic_resolver
+{
+public:
+    typedef io_service::executor_type                  executor_type;
+    typedef _InternetProtocol                          protocol_type;
+    typedef typename _InternetProtocol::endpoint       endpoint_type;
+    typedef basic_resolver_query<_InternetProtocol>    query;
+    typedef basic_resolver_iterator<_InternetProtocol> iterator;
+
+// construct / copy / destroy:
+
+    explicit basic_resolver(io_service& ios);
+    basic_resolver(const basic_resolver&) = delete;
+    basic_resolver(basic_resolver&& rhs);
+
+    ~basic_resolver();
+
+    basic_resolver& operator=(const basic_resolver&) = delete;
+    basic_resolver& operator=(basic_resolver&& rhs);
+
+    executor_type get_executor() noexcept;
+    void cancel();
+
+    iterator resolve(const query& q);
+    iterator resolve(const query& q, error_code& ec);
+
+    template<class CompletionToken>
+    auto async_resolve(const query& q, CompletionToken&& token);
+
+    iterator resolve(const endpoint_type& e);
+    iterator resolve(const endpoint_type& e, error_code& ec);
+
+    template<class CompletionToken>
+    auto async_resolve(const endpoint_type& e, CompletionToken&& token);
+};
+
+
+
+template<class InternetProtocol>  class basic_resolver;
+template<class InternetProtocol>  class basic_stream_socket;
+template<class InternetProtocol>  class basic_socket_acceptor;
+template<class InternetProtocol>  class basic_socket_iostream;
+
+class tcp
+{
+public:
+    typedef basic_endpoint<tcp>        endpoint;
+    typedef basic_resolver<tcp>        resolver;
+    typedef basic_stream_socket<tcp>   socket;
+    typedef basic_socket_acceptor<tcp> acceptor;
+    typedef basic_socket_iostream<tcp> iostream;
+//  class no_delay; // TODO
+
+    int family()   const;
+    int type()     const;
+    int protocol() const;
+
+    static tcp v4();
+    static tcp v6();
+
+private:
+    tcp(); // not defined
+};
+
+// tcp comparisons:
+bool operator==(const tcp& __lhs, const tcp& __rhs);
+bool operator!=(const tcp& __lhs, const tcp& __rhs);
+
+class udp
+{
+public:
+
+    typedef basic_endpoint<udp>        endpoint;
+    typedef basic_resolver<udp>        resolver;
+    typedef basic_datagram_socket<udp> socket;
+
+    int family()   const;
+    int type()     const;
+    int protocol() const;
+
+    static udp v4();
+    static udp v6();
+
+private:
+    udp(); // not defined
+};
+
+// udp comparisons:
+bool operator==(const udp& __lhs, const udp& __rhs);
+bool operator!=(const udp& __lhs, const udp& __rhs);
+
+#endif
 
 
 _LIBCPP_END_NAMESPACE_NETWORK_IP

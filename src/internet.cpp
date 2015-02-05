@@ -128,4 +128,52 @@ _VSTD::string network_v6::to_string() const
     return __s;
 }
 
+// resolver_category
+class _LIBCPP_HIDDEN __resolver_error_category
+    : public _VSTD::__do_message
+{
+public:
+    virtual const char* name() const _NOEXCEPT;
+    virtual _VSTD::string message(int ev) const;
+    virtual _VSTD::error_condition default_error_condition(int ev) const _NOEXCEPT;
+};
+
+const char*
+__resolver_error_category::name() const _NOEXCEPT
+{
+    return "resolver";
+}
+
+_VSTD::string
+__resolver_error_category::message(int ev) const
+{
+    switch (static_cast<resolver_errc>(ev)) {
+        case resolver_errc::host_not_found:           return "host not found";
+        case resolver_errc::host_not_found_try_again: return "host not found; try again";
+        case resolver_errc::service_not_found:        return "service not found";
+        default:                                      return "unknown resolver error";
+        }
+//    return __do_message::message(ev);
+}
+
+error_condition
+__resolver_error_category::default_error_condition(int ev) const _NOEXCEPT
+{
+    switch (static_cast<resolver_errc>(ev)) {
+        case resolver_errc::host_not_found:           
+        case resolver_errc::host_not_found_try_again: 
+        case resolver_errc::service_not_found:
+                 return _VSTD::error_condition(ev, resolver_category());
+        default: return _VSTD::error_condition(ev, generic_category());
+        }
+}
+
+const error_category&
+resolver_category() _NOEXCEPT
+{
+    static __resolver_error_category s;
+    return s;
+}
+
+    
 _LIBCPP_END_NAMESPACE_NETWORK_IP
