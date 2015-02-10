@@ -446,29 +446,29 @@ size_t buffer_size(const mutable_buffer& __b) noexcept { return __b.size(); }
 
 mutable_buffer operator+(const mutable_buffer& __b, size_t __n) noexcept
 {
-	size_t __sz = _VSTD::min(buffer_size(__b), __n);
-	return mutable_buffer(buffer_cast<char *>(__b) + __sz, buffer_size(__b) - __sz);
+    size_t __sz = _VSTD::min(buffer_size(__b), __n);
+    return mutable_buffer(buffer_cast<char *>(__b) + __sz, buffer_size(__b) - __sz);
 }
 mutable_buffer operator+(size_t __n, const mutable_buffer& __b) noexcept { return __b + __n; }
 
 const_buffer operator+(const const_buffer& __b, size_t __n) noexcept
 {
-	size_t __sz = _VSTD::min(buffer_size(__b), __n);
-	return const_buffer(buffer_cast<const char *>(__b) + __sz, buffer_size(__b) - __sz);
+    size_t __sz = _VSTD::min(buffer_size(__b), __n);
+    return const_buffer(buffer_cast<const char *>(__b) + __sz, buffer_size(__b) - __sz);
 }
 const_buffer operator+(size_t __n, const const_buffer& __b) noexcept { return __b + __n; }
 
 mutable_buffers_1 operator+(const mutable_buffers_1& __b, size_t __n) noexcept
 {
-	size_t __sz = _VSTD::min(buffer_size(__b), __n);
-	return mutable_buffers_1(buffer_cast<char *>(__b) + __sz, buffer_size(__b) - __sz);
+    size_t __sz = _VSTD::min(buffer_size(__b), __n);
+    return mutable_buffers_1(buffer_cast<char *>(__b) + __sz, buffer_size(__b) - __sz);
 }
 mutable_buffers_1 operator+(size_t __n, const mutable_buffers_1& __b) noexcept { return __b + __n; }
 
 const_buffers_1 operator+(const const_buffers_1& __b, size_t __n) noexcept
 {
-	size_t __sz = _VSTD::min(buffer_size(__b), __n);
-	return const_buffers_1(buffer_cast<const char *>(__b) + __sz, buffer_size(__b) - __sz);
+    size_t __sz = _VSTD::min(buffer_size(__b), __n);
+    return const_buffers_1(buffer_cast<const char *>(__b) + __sz, buffer_size(__b) - __sz);
 }
 const_buffers_1 operator+(size_t __n, const const_buffers_1& __b) noexcept { return __b + __n; }
 
@@ -508,8 +508,8 @@ size_t buffer_copy(const mutable_buffer& __d, const _ConstBufferSequence& __s, s
     for ( typename _ConstBufferSequence::const_iterator __iter = __s.begin();
             __space > 0 && __iter != __s.end(); ++__iter, __space -= __n)
     {
-    	__n = buffer_copy(__temp, *__iter, __space);
-    	__temp = __temp + __n;
+        __n = buffer_copy(__temp, *__iter, __space);
+        __temp = __temp + __n;
     }
     return buffer_size(__d) - __space;
 }
@@ -529,8 +529,8 @@ buffer_copy(const _MutableBufferSequence& __d, const const_buffer& __s,  size_t 
     for ( typename _MutableBufferSequence::const_iterator __iter = __d.begin();
                    __space > 0 && __iter != __d.end(); ++__iter, __space -= __n)
         {
-    	__n = buffer_copy(*__iter, __temp, __space);
-    	__temp = __temp + __n;
+        __n = buffer_copy(*__iter, __temp, __space);
+        __temp = __temp + __n;
         }
     return _VSTD::min(__max, buffer_size(__s)) - __space;
 }
@@ -547,34 +547,34 @@ typename _VSTD::enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::va
                        && is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
 buffer_copy(const _MutableBufferSequence& __d, const _ConstBufferSequence& __s, size_t __max) noexcept
 {
-	size_t __ret = 0;
-	size_t __sOffset = 0;
-	size_t __dOffset = 0;
-	typename _MutableBufferSequence::const_iterator __dIter  = __d.begin();
-	typename _ConstBufferSequence::const_iterator   __sIter  = __s.begin();
-	while (__ret < __max && __dIter != __d.end() && __sIter != __s.end())
-	{
-		typename _ConstBufferSequence::value_type __source = *__sIter + __sOffset;
-		typename _MutableBufferSequence::value_type __dest = *__dIter + __dOffset;
-		size_t __n = buffer_copy(__dest, __source, __max - __ret);
+    size_t __ret = 0;
+    size_t __sOffset = 0;
+    size_t __dOffset = 0;
+    typename _MutableBufferSequence::const_iterator __dIter  = __d.begin();
+    typename _ConstBufferSequence::const_iterator   __sIter  = __s.begin();
+    while (__ret < __max && __dIter != __d.end() && __sIter != __s.end())
+    {
+        typename _ConstBufferSequence::value_type __source = *__sIter + __sOffset;
+        typename _MutableBufferSequence::value_type __dest = *__dIter + __dOffset;
+        size_t __n = buffer_copy(__dest, __source, __max - __ret);
 
-		if ( __n != buffer_size(__source))
-			__sOffset += __n;
-		else {
-			__sIter++;
-			__sOffset = 0;
-			}
+        if ( __n != buffer_size(__source))
+            __sOffset += __n;
+        else {
+            __sIter++;
+            __sOffset = 0;
+            }
 
-		if ( __n != buffer_size(__dest))
-			__dOffset += __n;
-		else {
-			__dIter++;
-			__dOffset = 0;
-			}
+        if ( __n != buffer_size(__dest))
+            __dOffset += __n;
+        else {
+            __dIter++;
+            __dOffset = 0;
+            }
 
-		__ret += __n;
-	}
-	return __ret;
+        __ret += __n;
+    }
+    return __ret;
 }
 
 template<class _MutableBufferSequence, class _ConstBufferSequence>
@@ -686,45 +686,45 @@ template<class _Tp, class _Storage>
 class __dynamic_buffer
 {
 public:
-	typedef const_buffers_1   const_buffers_type;
-	typedef mutable_buffers_1 mutable_buffers_type;
-	
-	explicit __dynamic_buffer(_Storage& __vec) noexcept
-		: __data(__vec), __size(__vec.size()), __max_size(__vec.max.size()) {}
-	__dynamic_buffer(_Storage& __vec, size_t __maximum_size) noexcept
-		: __data(__vec), __size(__vec.size()), __max_size(__maximum_size) {}
-	__dynamic_buffer(__dynamic_buffer&&) = default;
+    typedef const_buffers_1   const_buffers_type;
+    typedef mutable_buffers_1 mutable_buffers_type;
+    
+    explicit __dynamic_buffer(_Storage& __vec) noexcept
+        : __data(__vec), __size(__vec.size()), __max_size(__vec.max.size()) {}
+    __dynamic_buffer(_Storage& __vec, size_t __maximum_size) noexcept
+        : __data(__vec), __size(__vec.size()), __max_size(__maximum_size) {}
+    __dynamic_buffer(__dynamic_buffer&&) = default;
 
-	size_t size() const noexcept     { return __size; }
-	size_t max_size() const noexcept { return __max_size; }
-	size_t capacity() const noexcept { return __data.capacity(); }
-	const_buffers_type data() const noexcept { return const_buffers_type(__data, __size); }
+    size_t size() const noexcept     { return __size; }
+    size_t max_size() const noexcept { return __max_size; }
+    size_t capacity() const noexcept { return __data.capacity(); }
+    const_buffers_type data() const noexcept { return const_buffers_type(__data, __size); }
 
-	mutable_buffers_type prepare(size_t __n)
-	{
-		if (size() + __n > __max_size)
-			throw std::length_error{"dynamic_buffer::prepare"};
-		__data.resize(__size + __n);
-		return mutable_buffers_type(__data, __size);
-	}
+    mutable_buffers_type prepare(size_t __n)
+    {
+        if (size() + __n > __max_size)
+            throw std::length_error{"dynamic_buffer::prepare"};
+        __data.resize(__size + __n);
+        return mutable_buffers_type(__data, __size);
+    }
 
-	void commit(size_t __n)
-	{
-		__size += _VSTD::min(__n, __data.size() - __size);
-		__data.resize(__size);
-	}
-	
-	void consume(size_t __n)
-	{
-		size_t __m = _VSTD::min(__n, __size);
-		__data.erase(__data.begin(), __data.begin() + __m);
-		__size -= __m;
-	}
+    void commit(size_t __n)
+    {
+        __size += _VSTD::min(__n, __data.size() - __size);
+        __data.resize(__size);
+    }
+    
+    void consume(size_t __n)
+    {
+        size_t __m = _VSTD::min(__n, __size);
+        __data.erase(__data.begin(), __data.begin() + __m);
+        __size -= __m;
+    }
 
 private:
-	_Storage&    __data;
-	size_t       __size;
-	const size_t __max_size;
+    _Storage&    __data;
+    size_t       __size;
+    const size_t __max_size;
 };
 
 // The dynamic_vector_buffer class template meets the requirements for DynamicBufferSequence.
@@ -757,6 +757,234 @@ template<class _CharT, class _Traits, class _Allocator>
 dynamic_string_buffer<_CharT, _Traits, _Allocator>
 dynamic_buffer(basic_string<_CharT, _Traits, _Allocator>& __str, size_t __n) noexcept
 {  return dynamic_string_buffer<_CharT, _Traits, _Allocator>(__str, __n); }
+
+enum { __default_transfer_size = 0x10000 }; // TODO - pick a real #, not just a guess
+
+class transfer_all
+{
+public:
+    size_t operator()(const _VSTD::error_code& __ec, size_t) const
+                                        { return !__ec ? 0 : __default_transfer_size; }
+};
+
+class transfer_at_least
+{
+public:
+    explicit transfer_at_least(size_t __sz) : __size(__sz) {}
+    size_t operator()(const _VSTD::error_code& __ec, size_t __sz) const
+                    { return ( !__ec || __sz >= __size ) ? 0 : __default_transfer_size; }
+private:
+    size_t __size;
+};
+
+class transfer_exactly
+{
+public:
+    explicit transfer_exactly(size_t __sz) : __size(__sz) {}
+    size_t operator()(const _VSTD::error_code& __ec, size_t __sz) const
+        {
+            return ( !__ec || __sz >= __size ) ? 0 
+                : _VSTD::min(__size - __sz, static_cast<size_t>(__default_transfer_size));
+        }
+private:
+    size_t __size;
+};
+
+
+// synchronous read operations:
+template<class _SyncReadStream, class _MutableBufferSequence, class _CompletionCondition>
+typename enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::value, size_t>::type
+read(_SyncReadStream& __stream, const _MutableBufferSequence& __buffers, 
+            _CompletionCondition __completion, _VSTD::error_code& __ec)
+{
+    __ec = _VSTD::error_code{};
+    return 0;       // TODO
+}
+
+template<class _SyncReadStream, class _MutableBufferSequence, class _CompletionCondition>
+typename enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::value, size_t>::type
+read(_SyncReadStream& __stream, const _MutableBufferSequence& __buffers, 
+                                                        _CompletionCondition __completion)
+{
+    _VSTD::error_code __ec;
+    size_t __ret = read(__stream, __buffers, __completion, __ec);
+    if (!__ec) throw _VSTD::system_error(__ec, "read(Mutable)");
+    return __ret;
+}
+
+template<class _SyncReadStream, class _MutableBufferSequence>
+typename enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::value, size_t>::type
+read(_SyncReadStream& __stream, const _MutableBufferSequence& __buffers, _VSTD::error_code& __ec)
+{ return read(__stream, __buffers, transfer_all(), __ec); }
+
+template<class _SyncReadStream, class _MutableBufferSequence>
+typename enable_if<is_mutable_buffer_sequence<_MutableBufferSequence>::value, size_t>::type
+read(_SyncReadStream& __stream, const _MutableBufferSequence& __buffers)
+{ return read(__stream, __buffers, transfer_all()); }
+
+
+template<class _SyncReadStream, class _DynamicBufferSequence, class _CompletionCondition>
+typename enable_if<is_dynamic_buffer_sequence<_DynamicBufferSequence>::value, size_t>::type
+read(_SyncReadStream& __stream, _DynamicBufferSequence&& __b, _CompletionCondition __completion, _VSTD::error_code& __ec)
+{
+    __ec = _VSTD::error_code{};
+    return 0;       // TODO
+}
+
+template<class _SyncReadStream, class _DynamicBufferSequence, class _CompletionCondition>
+typename enable_if<is_dynamic_buffer_sequence<_DynamicBufferSequence>::value, size_t>::type
+read(_SyncReadStream& __stream, _DynamicBufferSequence&& __b, _CompletionCondition __completion)
+{
+    _VSTD::error_code __ec;
+    size_t __ret = read(__stream, _VSTD::forward<_DynamicBufferSequence>(__b), __completion, __ec);
+    if (!__ec) throw _VSTD::system_error(__ec, "read(Dynamic)");
+    return __ret;
+}
+
+template<class _SyncReadStream, class _DynamicBufferSequence>
+typename enable_if<is_dynamic_buffer_sequence<_DynamicBufferSequence>::value, size_t>::type
+read(_SyncReadStream& __stream, _DynamicBufferSequence&& __b, _VSTD::error_code& __ec)
+{ return read(__stream, _VSTD::forward(__b), transfer_all(), __ec); }
+
+template<class _SyncReadStream, class _DynamicBufferSequence>
+typename enable_if<is_dynamic_buffer_sequence<_DynamicBufferSequence>::value, size_t>::type
+read(_SyncReadStream& __stream, _DynamicBufferSequence&& __b)
+{ return read(__stream, _VSTD::forward<_DynamicBufferSequence>(__b), transfer_all()); }
+
+// asynchronous read operations:
+// template<class AsyncReadStream, class MutableBufferSequence,
+// class CompletionToken>
+//   auto async_read(AsyncReadStream& stream,
+//                const MutableBufferSequence& buffers,
+//                CompletionToken&& token);
+// template<class AsyncReadStream, class MutableBufferSequence,
+// class CompletionCondition, class CompletionToken>
+//   auto async_read(AsyncReadStream& stream,
+//                const MutableBufferSequence& buffers,
+//                CompletionCondition completion_condition,
+//                CompletionToken&& token);
+// template<class AsyncReadStream, class DynamicBufferSequence,
+// class CompletionToken>
+//   auto async_read(AsyncReadStream& stream,
+//                DynamicBufferSequence&& b,
+//                CompletionToken&& token);
+// template<class AsyncReadStream, class DynamicBufferSequence,
+// class CompletionCondition, class CompletionToken>
+//   auto async_read(AsyncReadStream& stream,
+//                DynamicBufferSequence&& b,
+//                CompletionCondition completion_condition,
+//                CompletionToken&& token);
+
+// synchronous write operations:
+
+template<class _SyncWriteStream, class _CompletionCondition>
+size_t __write_buffer(_SyncWriteStream& __stream, const_buffer __buf,
+                              _CompletionCondition __completion, _VSTD::error_code& __ec)
+{
+    __ec = _VSTD::error_code{};
+    size_t __ret = 0;
+//     while ( buffer_size(__buf) > 0 )
+//     {
+//     	ret += __stream.write_some(__buf, __ec);
+//     	if (__ec) break;
+//     	
+//     }
+    return __ret;
+}
+
+
+template<class _SyncWriteStream, class _ConstBufferSequence, class _CompletionCondition>
+typename enable_if<is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
+write(_SyncWriteStream& __stream, const _ConstBufferSequence& __buffers,
+                              _CompletionCondition __completion, _VSTD::error_code& __ec)
+{
+    __ec = _VSTD::error_code{};
+    size_t __ret = 0;
+    for ( auto __iter = __buffers.begin(); !__ec && __Iiter != __buffers.end(); ++__iter )
+    {
+    	ret += __write_buffer(stream, *__iter, _completion, __ec);
+    	if (__ec) break;
+    }
+    return __ret;
+}
+
+template<class _SyncWriteStream, class _ConstBufferSequence, class _CompletionCondition>
+typename enable_if<is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
+write(_SyncWriteStream& __stream, const _ConstBufferSequence& __buffers, _CompletionCondition __completion)
+{
+    _VSTD::error_code __ec;
+    size_t __ret = write(__stream, __buffers, __completion, __ec);
+   	if (__ec) throw system_error(__ec, "write(Const)");
+    return __ret;
+}
+
+template<class _SyncWriteStream, class _ConstBufferSequence>
+typename enable_if<is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
+write(_SyncWriteStream& __stream, const _ConstBufferSequence& __buffers, error_code& __ec)
+{ return write(__stream, __buffers, transfer_all(), __ec); }
+
+template<class _SyncWriteStream, class _ConstBufferSequence>
+typename enable_if<is_const_buffer_sequence<_ConstBufferSequence>::value, size_t>::type
+write(_SyncWriteStream& __stream, const _ConstBufferSequence& __buffers)
+{ return write(__stream, __buffers, transfer_all()); }
+
+
+template<class _SyncWriteStream, class _DynamicBufferSequence, class _CompletionCondition>
+typename enable_if<is_dynamic_buffer_sequence<_DynamicBufferSequence>::value, size_t>::type
+write(_SyncWriteStream& __stream, _DynamicBufferSequence&& __b,
+                               _CompletionCondition __completion, _VSTD::error_code& __ec)
+{
+    __ec = _VSTD::error_code{};
+    size_t __ret = 0;
+    return __ret;
+}
+
+template<class _SyncWriteStream, class _DynamicBufferSequence, class _CompletionCondition>
+typename enable_if<is_dynamic_buffer_sequence<_DynamicBufferSequence>::value, size_t>::type
+write(_SyncWriteStream& __stream, _DynamicBufferSequence&& __b, _CompletionCondition __completion)
+{
+    _VSTD::error_code __ec;
+    size_t __ret = write(__stream, _VSTD::forward<_DynamicBufferSequence>(__b), __completion, __ec);
+   	if (__ec) throw system_error(__ec, "write(Dynamic)");
+    return __ret;
+}
+
+template<class _SyncWriteStream, class _DynamicBufferSequence>
+typename enable_if<is_dynamic_buffer_sequence<_DynamicBufferSequence>::value, size_t>::type
+write(_SyncWriteStream& __stream, _DynamicBufferSequence&& __b, _VSTD::error_code& __ec)
+{ return write(__stream, _VSTD::forward<_DynamicBufferSequence>(__b), transfer_all(), __ec); }
+
+template<class _SyncWriteStream, class _DynamicBufferSequence>
+typename enable_if<is_dynamic_buffer_sequence<_DynamicBufferSequence>::value, size_t>::type
+write(_SyncWriteStream& __stream, _DynamicBufferSequence&& __b)
+{ return write(__stream, _VSTD::forward<_DynamicBufferSequence>(__b), transfer_all()); }
+
+
+// asynchronous write operations:
+// 
+//       template<class AsyncWriteStream, class ConstBufferSequence,
+//         class CompletionToken>
+//           auto async_write(AsyncWriteStream& stream,
+//                            const ConstBufferSequence& buffers,
+//                            CompletionToken&& token);
+//       template<class AsyncWriteStream, class ConstBufferSequence,
+//         class CompletionCondition, class CompletionToken>
+//           auto async_write(AsyncWriteStream& stream,
+//                            const ConstBufferSequence& buffers,
+//                            CompletionCondition completion_condition,
+//                            CompletionToken&& token);
+//       template<class AsyncWriteStream, class DynamicBufferSequence,
+//         class CompletionToken>
+//           auto async_write(AsyncWriteStream& stream,
+//                            DynamicBufferSequence&& b,
+//                            CompletionToken&& token);
+//       template<class AsyncWriteStream, class DynamicBufferSequence,
+//         class CompletionCondition, class CompletionToken>
+//           auto async_write(AsyncWriteStream& stream,
+//                            DynamicBufferSequence&& b,
+//                            CompletionCondition completion_condition,
+//                            CompletionToken&& token);
+
 
 _LIBCPP_END_NAMESPACE_NETWORK
 
