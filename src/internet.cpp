@@ -128,6 +128,7 @@ _VSTD::string network_v6::to_string() const
     return __s;
 }
 
+#if 0
 // resolver_category
 class _LIBCPP_HIDDEN __resolver_error_category
     : public _VSTD::__do_message
@@ -174,6 +175,6 @@ resolver_category() _NOEXCEPT
     static __resolver_error_category s;
     return s;
 }
-
+#endif
     
 _LIBCPP_END_NAMESPACE_NETWORK_IP

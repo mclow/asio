@@ -12,6 +12,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_NETWORK
 
+#if 0
 // resolver_category
 class _LIBCPP_HIDDEN __stream_error_category
     : public _VSTD::__do_message
@@ -57,5 +58,6 @@ stream_category() _NOEXCEPT
     return s;
 }
 
+#endif
     
 _LIBCPP_END_NAMESPACE_NETWORK

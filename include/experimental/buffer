@@ -354,6 +354,7 @@ enum class stream_errc { // TODO need real values here
     not_found = 0x12346  // implementation defined
 };
 
+#if 0
 const _VSTD::error_category& stream_category() noexcept;
 
  _VSTD::error_code make_error_code(stream_errc __e) noexcept
@@ -361,6 +362,7 @@ const _VSTD::error_category& stream_category() noexcept;
  
 _VSTD::error_condition make_error_condition(stream_errc __e) noexcept
  { return _VSTD::error_condition(static_cast<int>(__e), stream_category()); }
+#endif
 
 class mutable_buffer
 {
@@ -435,42 +437,42 @@ template<class T> struct is_dynamic_buffer_sequence  : public _VSTD::true_type {
 
 // buffer conversions:
 template<class _Tp>
-_Tp buffer_cast(const const_buffer& __b) noexcept   { return static_cast<_Tp>(__b.data()); }
+inline _Tp buffer_cast(const const_buffer& __b) noexcept   { return static_cast<_Tp>(__b.data()); }
 
 template<class _Tp>
-_Tp buffer_cast(const mutable_buffer& __b) noexcept { return static_cast<_Tp>(__b.data()); }
+inline _Tp buffer_cast(const mutable_buffer& __b) noexcept { return static_cast<_Tp>(__b.data()); }
 
 // buffer size:
-size_t buffer_size(const const_buffer&   __b) noexcept { return __b.size(); }
-size_t buffer_size(const mutable_buffer& __b) noexcept { return __b.size(); }
+inline size_t buffer_size(const const_buffer&   __b) noexcept { return __b.size(); }
+inline size_t buffer_size(const mutable_buffer& __b) noexcept { return __b.size(); }
 
-mutable_buffer operator+(const mutable_buffer& __b, size_t __n) noexcept
+inline mutable_buffer operator+(const mutable_buffer& __b, size_t __n) noexcept
 {
     size_t __sz = _VSTD::min(buffer_size(__b), __n);
     return mutable_buffer(buffer_cast<char *>(__b) + __sz, buffer_size(__b) - __sz);
 }
-mutable_buffer operator+(size_t __n, const mutable_buffer& __b) noexcept { return __b + __n; }
+inline mutable_buffer operator+(size_t __n, const mutable_buffer& __b) noexcept { return __b + __n; }
 
-const_buffer operator+(const const_buffer& __b, size_t __n) noexcept
+inline const_buffer operator+(const const_buffer& __b, size_t __n) noexcept
 {
     size_t __sz = _VSTD::min(buffer_size(__b), __n);
     return const_buffer(buffer_cast<const char *>(__b) + __sz, buffer_size(__b) - __sz);
 }
-const_buffer operator+(size_t __n, const const_buffer& __b) noexcept { return __b + __n; }
+inline const_buffer operator+(size_t __n, const const_buffer& __b) noexcept { return __b + __n; }
 
-mutable_buffers_1 operator+(const mutable_buffers_1& __b, size_t __n) noexcept
+inline mutable_buffers_1 operator+(const mutable_buffers_1& __b, size_t __n) noexcept
 {
     size_t __sz = _VSTD::min(buffer_size(__b), __n);
     return mutable_buffers_1(buffer_cast<char *>(__b) + __sz, buffer_size(__b) - __sz);
 }
-mutable_buffers_1 operator+(size_t __n, const mutable_buffers_1& __b) noexcept { return __b + __n; }
+inline mutable_buffers_1 operator+(size_t __n, const mutable_buffers_1& __b) noexcept { return __b + __n; }
 
-const_buffers_1 operator+(const const_buffers_1& __b, size_t __n) noexcept
+inline const_buffers_1 operator+(const const_buffers_1& __b, size_t __n) noexcept
 {
     size_t __sz = _VSTD::min(buffer_size(__b), __n);
     return const_buffers_1(buffer_cast<const char *>(__b) + __sz, buffer_size(__b) - __sz);
 }
-const_buffers_1 operator+(size_t __n, const const_buffers_1& __b) noexcept { return __b + __n; }
+inline const_buffers_1 operator+(size_t __n, const const_buffers_1& __b) noexcept { return __b + __n; }
 
 
 template <class _ConstBufferSequence>
@@ -484,14 +486,14 @@ buffer_size(const _ConstBufferSequence& __bs) noexcept
 }
 
 
-size_t buffer_copy(const mutable_buffer& __d, const const_buffer& __s) noexcept
+inline size_t buffer_copy(const mutable_buffer& __d, const const_buffer& __s) noexcept
 {
     size_t __ret = _VSTD::min(buffer_size(__s), buffer_size(__d));
     _VSTD::memcpy(buffer_cast<void *>(__d), buffer_cast<const void *>(__s), __ret);
     return __ret;
 }
 
-size_t buffer_copy(const mutable_buffer& __d, const const_buffer& __s, size_t __max) noexcept
+inline size_t buffer_copy(const mutable_buffer& __d, const const_buffer& __s, size_t __max) noexcept
 {
     size_t __ret = _VSTD::min(__max,
                    _VSTD::min(buffer_size(__s), buffer_size(__d)));
@@ -584,15 +586,15 @@ buffer_copy(const _MutableBufferSequence& __d, const _ConstBufferSequence& __s) 
 { return buffer_copy(__d, __s, _VSTD::numeric_limits<size_t>::max()); }
 
 
-mutable_buffers_1 buffer(      void* __p, size_t __n) noexcept { return mutable_buffers_1(__p, __n); }
-const_buffers_1   buffer(const void* __p, size_t __n) noexcept { return const_buffers_1  (__p, __n); }
-mutable_buffers_1 buffer(const mutable_buffer& __b) noexcept { return mutable_buffers_1(__b); }
-const_buffers_1   buffer(const const_buffer&   __b) noexcept { return const_buffers_1  (__b); }
+inline mutable_buffers_1 buffer(      void* __p, size_t __n) noexcept { return mutable_buffers_1(__p, __n); }
+inline const_buffers_1   buffer(const void* __p, size_t __n) noexcept { return const_buffers_1  (__p, __n); }
+inline mutable_buffers_1 buffer(const mutable_buffer& __b) noexcept { return mutable_buffers_1(__b); }
+inline const_buffers_1   buffer(const const_buffer&   __b) noexcept { return const_buffers_1  (__b); }
 
-mutable_buffers_1 buffer(const mutable_buffer& __b, size_t __n) noexcept
+inline mutable_buffers_1 buffer(const mutable_buffer& __b, size_t __n) noexcept
 { return mutable_buffers_1(buffer_cast<void*>(__b),_VSTD::min(buffer_size(__b), __n)); }
 
-const_buffers_1   buffer(const const_buffer&   __b, size_t __n) noexcept
+inline const_buffers_1   buffer(const const_buffer&   __b, size_t __n) noexcept
 { return const_buffers_1  (buffer_cast<const void*>(__b),_VSTD::min(buffer_size(__b), __n)); }
 
 // built-in arrays
@@ -764,7 +766,7 @@ class transfer_all
 {
 public:
     size_t operator()(const _VSTD::error_code& __ec, size_t) const
-                                        { return !__ec ? 0 : __default_transfer_size; }
+                                        { return __ec ? 0 : __default_transfer_size; }
 };
 
 class transfer_at_least
@@ -772,7 +774,7 @@ class transfer_at_least
 public:
     explicit transfer_at_least(size_t __sz) : __size(__sz) {}
     size_t operator()(const _VSTD::error_code& __ec, size_t __sz) const
-                    { return ( !__ec || __sz >= __size ) ? 0 : __default_transfer_size; }
+                    { return ( __ec || __sz >= __size ) ? 0 : __default_transfer_size; }
 private:
     size_t __size;
 };
@@ -783,7 +785,7 @@ public:
     explicit transfer_exactly(size_t __sz) : __size(__sz) {}
     size_t operator()(const _VSTD::error_code& __ec, size_t __sz) const
         {
-            return ( !__ec || __sz >= __size ) ? 0 
+            return ( __ec || __sz >= __size ) ? 0 
                 : _VSTD::min(__size - __sz, static_cast<size_t>(__default_transfer_size));
         }
 private:
@@ -877,20 +879,19 @@ read(_SyncReadStream& __stream, _DynamicBufferSequence&& __b)
 
 // synchronous write operations:
 
-template<class _SyncWriteStream, class _CompletionCondition>
-size_t __write_buffer(_SyncWriteStream& __stream, const_buffer __buf,
-                              _CompletionCondition __completion, _VSTD::error_code& __ec)
-{
-    __ec = _VSTD::error_code{};
-    size_t __ret = 0;
-//     while ( buffer_size(__buf) > 0 )
+// template<class _SyncWriteStream, class _CompletionCondition>
+// void __write_const_buffer(_SyncWriteStream& __stream, const_buffer __buf, size_t &__so_far,
+//                               _CompletionCondition __completion, _VSTD::error_code& __ec)
+// {
+//     while ((buffer_size(__buf) > 0) && ((__xfer = __completion(__ec, __so_far)) > 0))
 //     {
-//     	ret += __stream.write_some(__buf, __ec);
-//     	if (__ec) break;
-//     	
+//      size_t __this_size = _VSTD::min(__xfer, buffer_size(__buf));
+//      __xfer = __stream.write_some(
+//                      const_buffer{buffer_cast<const void*>(__buf), __this_size}, __ec);
+//      __buf     = __buf + __xfer;
+//      __so_far += __xfer;
 //     }
-    return __ret;
-}
+// }
 
 
 template<class _SyncWriteStream, class _ConstBufferSequence, class _CompletionCondition>
@@ -900,11 +901,18 @@ write(_SyncWriteStream& __stream, const _ConstBufferSequence& __buffers,
 {
     __ec = _VSTD::error_code{};
     size_t __ret = 0;
-    for ( auto __iter = __buffers.begin(); !__ec && __Iiter != __buffers.end(); ++__iter )
-    {
-    	ret += __write_buffer(stream, *__iter, _completion, __ec);
-    	if (__ec) break;
-    }
+    for (const_buffer __buf : __buffers)
+        while ((buffer_size(__buf) > 0))
+        {
+            size_t __xfer = __completion(__ec, __ret);
+            if (__xfer == 0) return __ret;
+            __xfer = __stream.write_some(
+                         const_buffer{buffer_cast<const void*>(__buf), 
+                                _VSTD::min(__xfer, buffer_size(__buf))},
+                        __ec);
+            __buf  = __buf + __xfer;
+            __ret += __xfer;
+        }
     return __ret;
 }
 
@@ -914,7 +922,7 @@ write(_SyncWriteStream& __stream, const _ConstBufferSequence& __buffers, _Comple
 {
     _VSTD::error_code __ec;
     size_t __ret = write(__stream, __buffers, __completion, __ec);
-   	if (__ec) throw system_error(__ec, "write(Const)");
+    if (__ec) throw system_error(__ec, "write(Const)");
     return __ret;
 }
 
@@ -935,7 +943,8 @@ write(_SyncWriteStream& __stream, _DynamicBufferSequence&& __b,
                                _CompletionCondition __completion, _VSTD::error_code& __ec)
 {
     __ec = _VSTD::error_code{};
-    size_t __ret = 0;
+    size_t __ret = write(__stream, __b.data(), __completion, __ec);
+    __b.consume(__ret);
     return __ret;
 }
 
@@ -945,7 +954,7 @@ write(_SyncWriteStream& __stream, _DynamicBufferSequence&& __b, _CompletionCondi
 {
     _VSTD::error_code __ec;
     size_t __ret = write(__stream, _VSTD::forward<_DynamicBufferSequence>(__b), __completion, __ec);
-   	if (__ec) throw system_error(__ec, "write(Dynamic)");
+    if (__ec) throw system_error(__ec, "write(Dynamic)");
     return __ret;
 }
 

@@ -276,6 +276,7 @@ enum class resolver_errc {
     service_not_found = 9         // EAI_SERVICE
 };
 
+#if 0
 const _VSTD::error_category& resolver_category() noexcept;
 
  _VSTD::error_code make_error_code(resolver_errc __e) noexcept
@@ -283,6 +284,7 @@ const _VSTD::error_category& resolver_category() noexcept;
  
 _VSTD::error_condition make_error_condition(resolver_errc __e) noexcept
  { return _VSTD::error_condition(static_cast<int>(__e), resolver_category()); }
+#endif
 
 
 
