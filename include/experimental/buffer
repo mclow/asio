@@ -431,9 +431,15 @@ public:
 
 
 // buffer type traits:
-template<class T> struct is_mutable_buffer_sequence  : public _VSTD::true_type {}; // TODO
-template<class T> struct is_const_buffer_sequence    : public _VSTD::true_type {}; // TODO
-template<class T> struct is_dynamic_buffer_sequence  : public _VSTD::true_type {}; // TODO
+template<class _Tp> struct is_mutable_buffer_sequence  : public _VSTD::true_type {}; // TODO
+
+template<class _Tp> 
+struct is_const_buffer_sequence : public _VSTD::integral_constant<bool,
+	_VSTD::is_convertible<const_buffer, typename _Tp::value_type>::value &&
+	__is_bidirectional_iterator<typename _Tp::const_iterator>::value
+	> {}; // TODO
+	
+template<class _Tp> struct is_dynamic_buffer_sequence  : public _VSTD::false_type {}; // TODO
 
 // buffer conversions:
 template<class _Tp>

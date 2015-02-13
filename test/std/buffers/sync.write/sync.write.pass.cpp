@@ -48,7 +48,7 @@ int main()
 	const char *src = "0123456789_123456789_123456789_123456789";
 	net::const_buffer buf(src, strlen(src));
 	VectorWriteStream stream;
-	net::write(stream, buf);
+	net::write(stream, net::const_buffers_1(buf));
 	assert(stream.size() == buf.size());
 	assert(memcmp(stream.data(), src, stream.size()) == 0);
 }
