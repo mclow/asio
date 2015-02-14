@@ -47,8 +47,31 @@ int main()
 {
 	const char *src = "0123456789_123456789_123456789_123456789";
 	net::const_buffer buf(src, strlen(src));
+	
+	{
 	VectorWriteStream stream;
 	net::write(stream, net::const_buffers_1(buf));
 	assert(stream.size() == buf.size());
 	assert(memcmp(stream.data(), src, stream.size()) == 0);
+	}
+	{
+	VectorWriteStream stream;
+	net::write(stream, net::const_buffers_1(buf), net::transfer_all());
+	assert(stream.size() == buf.size());
+	assert(memcmp(stream.data(), src, stream.size()) == 0);
+	}
+	{
+	VectorWriteStream stream;
+	const size_t Sz = 32;
+	net::write(stream, net::const_buffers_1(buf), net::transfer_at_least(Sz));
+	assert(stream.size() <= buf.size() && stream.size() >= Sz);
+	assert(memcmp(stream.data(), src, stream.size()) == 0);
+	}
+	{
+	VectorWriteStream stream;
+	const size_t Sz = 32;
+	net::write(stream, net::const_buffers_1(buf), net::transfer_exactly(Sz));
+	assert(stream.size() == Sz);
+	assert(memcmp(stream.data(), src, stream.size()) == 0);
+	}
 }

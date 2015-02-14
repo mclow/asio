@@ -429,17 +429,103 @@ public:
 };
 
 
-
 // buffer type traits:
-template<class _Tp> struct is_mutable_buffer_sequence  : public _VSTD::true_type {}; // TODO
+struct __buffer_tt
+{
+    struct __two {char __lx; char __lxx;};
+    
+// type checks
+    template <class _Up> static __two __test_value_type(...);
+    template <class _Up> static char __test_value_type(typename _Up::value_type* = 0);
+    
+    template <class _Up> static __two __test_const_iter(...);
+    template <class _Up> static char __test_const_iter(typename _Up::const_iterator* = 0);
 
-template<class _Tp> 
-struct is_const_buffer_sequence : public _VSTD::integral_constant<bool,
-	_VSTD::is_convertible<const_buffer, typename _Tp::value_type>::value &&
-	__is_bidirectional_iterator<typename _Tp::const_iterator>::value
-	> {}; // TODO
-	
-template<class _Tp> struct is_dynamic_buffer_sequence  : public _VSTD::false_type {}; // TODO
+    template <class _Up> static __two __test_const_buffers_type(...);
+    template <class _Up> static char  __test_const_buffers_type(typename _Up::const_buffers_type* = 0);
+
+    template <class _Up> static __two __test_mutable_buffers_type(...);
+    template <class _Up> static char  __test_mutable_buffers_type(typename _Up::mutable_buffers_type* = 0);
+
+// member checks
+    template <class _Up> static __two __test_method_begin(...);
+    template <class _Up> static char  __test_method_begin( decltype(&_Up::begin) * = 0);
+
+    template <class _Up> static __two __test_method_end(...);
+    template <class _Up> static char  __test_method_end( decltype(&_Up::end) * = 0 );
+};
+
+template <class _Tp>
+struct __has_const_buffer_sequence_members : public _VSTD::integral_constant<bool, 
+	sizeof(__buffer_tt::__test_value_type<_Tp>(0)) == 1 && 
+	sizeof(__buffer_tt::__test_const_iter<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_method_begin<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_method_end<_Tp>(0)) == 1
+	> {};
+
+template <class _Tp>
+struct __test_const_buffer_sequence_members : public _VSTD::integral_constant<bool, 
+	_VSTD::is_convertible<typename _Tp::value_type, const_buffer>::value && 
+	_VSTD::is_convertible<typename _Tp::const_iterator, decltype(declval<_Tp>().begin())>::value && 
+	_VSTD::is_convertible<typename _Tp::const_iterator, decltype(declval<_Tp>().end  ())>::value> {};
+
+template <class _Tp>
+struct is_const_buffer_sequence : public _VSTD::conditional<
+		__has_const_buffer_sequence_members<_Tp>::value,
+		__test_const_buffer_sequence_members<_Tp>,
+		_VSTD::false_type
+	>::type {};
+		
+template <class _Tp>
+struct __has_mutable_buffer_sequence_members : public _VSTD::integral_constant<bool, 
+	sizeof(__buffer_tt::__test_value_type<_Tp>(0)) == 1 && 
+	sizeof(__buffer_tt::__test_const_iter<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_method_begin<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_method_end<_Tp>(0)) == 1
+	> {};
+
+template <class _Tp>
+struct __test_mutable_buffer_sequence_members : public _VSTD::integral_constant<bool, 
+	_VSTD::is_convertible<typename _Tp::value_type, mutable_buffer>::value && 
+	_VSTD::is_convertible<typename _Tp::const_iterator, decltype(declval<_Tp>().begin())>::value && 
+	_VSTD::is_convertible<typename _Tp::const_iterator, decltype(declval<_Tp>().end  ())>::value> {};
+
+template <class _Tp>
+struct is_mutable_buffer_sequence : public _VSTD::conditional<
+		__has_mutable_buffer_sequence_members<_Tp>::value,
+		__test_mutable_buffer_sequence_members<_Tp>,
+		_VSTD::false_type
+	>::type {};
+
+
+template <class _Tp>
+struct __has_dynamic_buffer_sequence_members : public _VSTD::integral_constant<bool, 
+	sizeof(__buffer_tt::__test_const_buffers_type<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_mutable_buffers_type<_Tp>(0)) == 1 
+/*
+&&
+	sizeof(__buffer_tt::__test_size<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_max_size<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_capacity<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_data<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_prepare<_Tp>(0)) == 1 &&
+	sizeof(__buffer_tt::__test_commit<_Tp>(0)) == 1
+*/
+	> {};
+
+template <class _Tp>
+struct __test_dynamic_buffer_sequence_members : public _VSTD::integral_constant<bool, 
+	is_const_buffer_sequence  <typename _Tp::const_buffers_type>::value && 
+	is_mutable_buffer_sequence<typename _Tp::mutable_buffers_type>::value
+	> {};
+
+
+template <class _Tp>
+struct is_dynamic_buffer_sequence : public _VSTD::conditional<
+		__has_dynamic_buffer_sequence_members<_Tp>::value,
+		__test_dynamic_buffer_sequence_members<_Tp>,
+		_VSTD::false_type
+	>::type {};
 
 // buffer conversions:
 template<class _Tp>
