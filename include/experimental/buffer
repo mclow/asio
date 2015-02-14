@@ -466,8 +466,9 @@ struct __has_const_buffer_sequence_members : public _VSTD::integral_constant<boo
 template <class _Tp>
 struct __test_const_buffer_sequence_members : public _VSTD::integral_constant<bool, 
 	_VSTD::is_convertible<typename _Tp::value_type, const_buffer>::value && 
-	_VSTD::is_convertible<typename _Tp::const_iterator, decltype(declval<_Tp>().begin())>::value && 
-	_VSTD::is_convertible<typename _Tp::const_iterator, decltype(declval<_Tp>().end  ())>::value> {};
+	_VSTD::is_convertible<decltype(declval<_Tp>().begin()), typename _Tp::const_iterator>::value && 
+	_VSTD::is_convertible<decltype(declval<_Tp>().end  ()), typename _Tp::const_iterator>::value
+	> {};
 
 template <class _Tp>
 struct is_const_buffer_sequence : public _VSTD::conditional<
@@ -487,8 +488,9 @@ struct __has_mutable_buffer_sequence_members : public _VSTD::integral_constant<b
 template <class _Tp>
 struct __test_mutable_buffer_sequence_members : public _VSTD::integral_constant<bool, 
 	_VSTD::is_convertible<typename _Tp::value_type, mutable_buffer>::value && 
-	_VSTD::is_convertible<typename _Tp::const_iterator, decltype(declval<_Tp>().begin())>::value && 
-	_VSTD::is_convertible<typename _Tp::const_iterator, decltype(declval<_Tp>().end  ())>::value> {};
+	_VSTD::is_convertible<decltype(declval<_Tp>().begin()), typename _Tp::const_iterator>::value && 
+	_VSTD::is_convertible<decltype(declval<_Tp>().end  ()), typename _Tp::const_iterator>::value
+	> {};
 
 template <class _Tp>
 struct is_mutable_buffer_sequence : public _VSTD::conditional<
