@@ -223,4 +223,184 @@ namespace std {
 
 #include <experimental/__net_config>
 
+#include <typeinfo>
+#include <vector>
+#include <stdexcept>
+
+_LIBCPP_BEGIN_NAMESPACE_NETWORK
+
+enum class fork_event {
+    prepare,
+    parent,
+    child
+  };
+
+class execution_context {
+public:
+	class service;
+
+	execution_context();
+	execution_context           (const execution_context&) = delete;
+	execution_context& operator=(const execution_context&) = delete;
+	virtual ~execution_context();
+
+//	execution context operations:
+	void notify_fork(fork_event e);
+
+	template <class Service>
+	typename Service::key_type * __find_service() const
+	{
+		const std::type_info &key = typeid(typename Service::key_type);
+		auto iter = std::find_if(svcs_.cbegin(), svcs_.cend(), [&key]
+			(const service_entry &val) { return key == *val.key_; });
+		if (iter == svcs_.end()) return nullptr;
+
+		typename Service::key_type *__svc = dynamic_cast<typename Service::key_type *>(iter->svc_);
+		assert(__svc && "Dynamic cast failed in __find_service");
+		return __svc;
+	}
+
+	template <class Service>
+	void __add_service(Service *s)
+	{
+		svcs_.emplace_back(s);
+	}
+
+private:
+	struct service_entry
+	{
+		template <class Service>
+		service_entry (Service *p) : 
+			svc_(p), shutdown_(false), key_(&typeid(typename Service::key_type)) {}
+
+		~service_entry() { delete svc_; }
+	
+		execution_context::service * svc_;
+		bool                  shutdown_;
+		const std::type_info * key_;
+	};
+
+	std::vector<service_entry> svcs_;
+
+protected:
+
+    void shutdown() noexcept;
+    void destroy() noexcept;
+};
+
+// service access:
+
+template<class Service>
+bool has_service(const execution_context& __ctx) noexcept
+{
+	static_assert(_VSTD::is_base_of<typename Service::key_type, Service>::value, "" );
+	static_assert(_VSTD::is_base_of<execution_context::service, Service>::value, "" );
+	return __ctx.__find_service<Service>() != nullptr;
+}
+
+class service_already_exists : public std::logic_error
+{
+public:
+    explicit service_already_exists(const string& __s) : logic_error(__s) {}
+    explicit service_already_exists(const char* __s)   : logic_error(__s) {}
+
+    virtual ~service_already_exists() _NOEXCEPT;
+};
+
+template<class Service, class... _Args>
+Service& make_service(execution_context& __ctx, _Args&&... __args)
+{
+	static_assert(_VSTD::is_base_of<typename Service::key_type, Service>::value, "" );
+	static_assert(_VSTD::is_base_of<execution_context::service, Service>::value, "" );
+
+	if (has_service<Service>(__ctx))
+		throw service_already_exists{"Service already exists"};
+	
+	_VSTD::unique_ptr<Service> __up(new Service(__ctx, __args...));
+	__ctx.__add_service(__up.get());
+	return *__up.release();
+}
+
+template<class Service>
+typename Service::key_type& use_service(execution_context& __ctx)
+{
+	static_assert(_VSTD::is_base_of<typename Service::key_type, Service>::value, "" );
+	static_assert(_VSTD::is_base_of<execution_context::service, Service>::value, "" );
+	
+	typename Service::key_type* __p = __ctx.__find_service<Service>();
+	return __p ? *__p : make_service<Service>(__ctx);
+}
+
+
+class execution_context::service
+{
+	friend class execution_context;
+protected:
+	explicit service(execution_context& __owner) : __ctx(__owner) {}
+	service           (const service&) = delete;
+	service& operator=(const service&) = delete;
+	virtual ~service();
+
+//	service observers:
+	execution_context& context() noexcept { return __ctx; }
+
+private:
+//	service operations:
+	virtual void shutdown() noexcept = 0;
+	virtual void notify_fork(fork_event e) {}
+
+	execution_context& __ctx;
+};
+
+// class system_executor;
+// 
+// class system_context : public execution_context {
+// public:
+// //	types:
+// 	typedef system_executor executor_type;
+// 
+// //	construct / copy / destroy:
+// 	system_context           ()                      = delete;
+// 	system_context           (const system_context&) = delete;
+// 	system_context& operator=(const system_context&) = delete;
+// 	~system_context();
+// 
+// //	system_context operations:
+// 	executor_type get_executor() noexcept;
+// 
+// 	void stop();
+// 	bool stopped() const noexcept;
+// 	void join();
+// };
+
+// class system_executor {
+// public:
+// //	constructors:
+//     system_executor() {}
+// 
+// //	executor operations:
+//     system_context& context() noexcept;
+// 
+//     void on_work_started() noexcept {}
+//     void on_work_finished() noexcept {}
+// 
+//     template<class Func, class ProtoAllocator>
+//       void dispatch(Func&& f, const ProtoAllocator& a);
+//     // DECAY_COPY(forward<Func>(f))()
+// 
+//     template<class Func, class ProtoAllocator>
+//       void post(Func&& f, const ProtoAllocator& a);
+// 
+//     template<class Func, class ProtoAllocator>
+//       void defer(Func&& f, const ProtoAllocator& a);
+// 
+//   };
+// 
+// bool operator==(const system_executor&, const system_executor&) noexcept { return true; }
+// bool operator!=(const system_executor&, const system_executor&) noexcept { return false; }
+// 
+// 
+
+_LIBCPP_END_NAMESPACE_NETWORK
+
 #endif
