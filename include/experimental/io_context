@@ -1,0 +1,110 @@
+// -*- C++ -*-
+//===--------------------------- io_service -------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//  Based on N4332
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP_EXPERIMENTAL_IO_CONTEXT
+#define _LIBCPP_EXPERIMENTAL_IO_CONTEXT
+
+/* 
+    io_context synopsis
+
+namespace std {
+  namespace experimental {
+    inline namespace network_v1 {
+
+      class io_context;
+      
+	  class io_context : public execution_context
+	  {
+	  public:
+		// types:
+
+		class executor_type;
+		typedef implementation defined count_type;
+
+		// construct / copy / destroy:
+		io_context();
+		explicit io_context(int concurrency_hint);
+		io_context(const io_context&) = delete;
+		io_context& operator=(const io_context&) = delete;
+
+		// io_context operations:
+		executor_type get_executor() noexcept;
+
+		count_type run();
+		template<class Rep, class Period>
+		  count_type run_for(const chrono::duration<Rep, Period>& rel_time);
+		template<class Clock, class Duration>
+		  count_type run_until(const chrono::time_point<Clock, Duration>& abs_time);
+
+		count_type run_one();
+		template<class Rep, class Period>
+		  count_type run_one_for(const chrono::duration<Rep, Period>& rel_time);
+		template<class Clock, class Duration>
+		  count_type run_one_until(const chrono::time_point<Clock, Duration>& abs_time);
+
+		count_type poll();
+		count_type poll_one();
+		void stop();
+		bool stopped() const noexcept;
+		void restart();
+	  };
+
+    } // inline namespace network_v1
+  } // namespace experimental
+} // namespace std
+
+*/
+
+
+#include <experimental/__net_config>
+#include <experimental/executor>
+
+_LIBCPP_BEGIN_NAMESPACE_NETWORK
+
+class io_context : public execution_context {
+public:
+// types:
+	class executor_type;
+	typedef implementation defined count_type;
+
+// construct / copy / destroy:
+	io_context();
+	explicit io_context(int concurrency_hint);
+	io_context(const io_context&) = delete;
+	io_context& operator=(const io_context&) = delete;
+
+// io_context operations:
+	executor_type get_executor() noexcept;
+
+	count_type run();
+
+	template<class Rep, class Period>
+	  count_type run_for(const chrono::duration<Rep, Period>& rel_time);
+	template<class Clock, class Duration>
+	  count_type run_until(const chrono::time_point<Clock, Duration>& abs_time);
+
+	count_type run_one();
+	template<class Rep, class Period>
+	  count_type run_one_for(const chrono::duration<Rep, Period>& rel_time);
+	template<class Clock, class Duration>
+	  count_type run_one_until(const chrono::time_point<Clock, Duration>& abs_time);
+
+	count_type poll();
+	count_type poll_one();
+
+	void stop();
+	bool stopped() const noexcept;
+	void restart();
+};
+
+_LIBCPP_END_NAMESPACE_NETWORK
+
+#endif
