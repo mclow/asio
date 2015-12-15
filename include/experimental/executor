@@ -254,10 +254,7 @@ public:
 		auto iter = std::find_if(svcs_.cbegin(), svcs_.cend(), [&key]
 			(const service_entry &val) { return key == *val.key_; });
 		if (iter == svcs_.end()) return nullptr;
-
-		typename Service::key_type *__svc = dynamic_cast<typename Service::key_type *>(iter->svc_);
-		assert(__svc && "Dynamic cast failed in __find_service");
-		return __svc;
+		return static_cast<typename Service::key_type *>(iter->svc_);
 	}
 
 	template <class Service>
